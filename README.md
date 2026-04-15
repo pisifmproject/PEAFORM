@@ -85,7 +85,7 @@ Akan:
 
 ## 🌐 Access URLs
 
-- **Production**: `http://10.125.48.102:9000`
+- **Production**: `http://10.125.48.102:9000/`
 - **Backend API**: `http://10.125.48.102:3002/api`
 - **Health Check**: `http://10.125.48.102:3002/health`
 

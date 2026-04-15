@@ -42,7 +42,7 @@
 
 ### Configuration
 - Backend runs on: `http://10.125.48.102:3002`
-- Frontend accessible at: `http://10.125.48.102:9000`
+- Frontend accessible at: `http://10.125.48.102:9000/`
 - Database: PostgreSQL at `localhost:5432/peaform`
 
 ### Migration

@@ -77,8 +77,8 @@ Write-Host "  Deployment Complete!" -ForegroundColor Green
 Write-Host "=================================================" -ForegroundColor Green
 Write-Host ""
 Write-Host "Website:" -ForegroundColor Cyan
-Write-Host "  Local: http://localhost/peaform/" -ForegroundColor White
-Write-Host "  IP: http://10.125.48.102/peaform/" -ForegroundColor White
+Write-Host "  Local: http://localhost:9000/" -ForegroundColor White
+Write-Host "  Network: http://10.125.48.102:9000/" -ForegroundColor White
 Write-Host ""
 Write-Host "Login:" -ForegroundColor Cyan
 Write-Host "  Username: admin" -ForegroundColor White
