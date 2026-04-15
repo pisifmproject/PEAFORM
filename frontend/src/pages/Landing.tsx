@@ -57,7 +57,7 @@ export default function Landing() {
               Project & Engineering <span className="text-blue-600">Approval Workflow</span>
             </h1>
             <p className="text-lg sm:text-xl text-slate-600 mb-10 max-w-2xl mx-auto leading-relaxed">
-              Accelerate your engineering lifecycle with our streamlined digital approval platform. Built for precision, speed, and total transparency.
+              Accelerate your engineering lifecycle with our streamlined digital approval platform. Built for precision and total transparency.
             </p>
             <div className="flex flex-col sm:flex-row items-center justify-center gap-4">
               <Link
@@ -96,7 +96,7 @@ export default function Landing() {
               },
               {
                 title: "Smart Routing",
-                desc: "Automated workflow distribution to HOD, HSE, and Factory Managers based on plant location and project scope.",
+                desc: "Automated workflow distribution to HOD, HSE, Factory Managers, and Project Engineering Managers based on plant location and project scope.",
                 icon: Zap,
                 color: "text-amber-600",
                 bg: "bg-amber-50"
@@ -130,13 +130,13 @@ export default function Landing() {
         <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 border-t border-slate-100 pt-8">
           <div className="flex flex-col md:flex-row justify-between items-center gap-6">
             <div className="flex items-center gap-2">
-              <FileText className="h-5 w-5 text-blue-600" />
-              <span className="font-bold text-slate-900">PEAF SYSTEM</span>
+              {/* <FileText className="h-5 w-5 text-blue-600" /> */}
+              {/* <span className="font-bold text-slate-900">PEAF SYSTEM</span> */}
             </div>
             <p className="text-sm text-slate-500">© 2026 PT Indofood Fortuna Makmur. All rights reserved.</p>
             <div className="flex gap-6">
-              <a href="#" className="text-sm text-slate-400 hover:text-slate-600 transition-colors">Privacy Policy</a>
-              <a href="#" className="text-sm text-slate-400 hover:text-slate-600 transition-colors">Terms of Service</a>
+              {/* <a href="#" className="text-sm text-slate-400 hover:text-slate-600 transition-colors">Privacy Policy</a>
+              <a href="#" className="text-sm text-slate-400 hover:text-slate-600 transition-colors">Terms of Service</a> */}
             </div>
           </div>
         </div>
