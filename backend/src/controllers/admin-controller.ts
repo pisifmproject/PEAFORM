@@ -1,0 +1,67 @@
+import { Response } from 'express';
+import { AuthRequest } from '../middleware/authenticate.js';
+import * as userService from '../services/user-service.js';
+
+export const getUsers = async (req: AuthRequest, res: Response) => {
+  if (req.user?.role !== 'admin') {
+    return res.status(403).json({ error: 'Forbidden' });
+  }
+
+  try {
+    const all_users = await userService.getAllUsers();
+    const users = all_users.map((u) => {
+      const { password, ...rest } = u;
+      return rest;
+    });
+    res.json(users);
+  } catch (error: any) {
+    console.error('Get users error:', error);
+    res.status(500).json({ error: error.message });
+  }
+};
+
+export const updateUserRole = async (req: AuthRequest, res: Response) => {
+  if (req.user?.role !== 'admin') {
+    return res.status(403).json({ error: 'Forbidden' });
+  }
+
+  try {
+    await userService.updateUserRole(req.params.id, req.body.role);
+    res.json({ success: true });
+  } catch (error: any) {
+    console.error('Update user role error:', error);
+    res.status(500).json({ error: error.message });
+  }
+};
+
+export const updateUserPlant = async (req: AuthRequest, res: Response) => {
+  if (req.user?.role !== 'admin') {
+    return res.status(403).json({ error: 'Forbidden' });
+  }
+
+  try {
+    await userService.updateUserPlant(req.params.id, req.body.plant);
+    res.json({ success: true });
+  } catch (error: any) {
+    console.error('Update user plant error:', error);
+    res.status(500).json({ error: error.message });
+  }
+};
+
+export const deleteUser = async (req: AuthRequest, res: Response) => {
+  if (req.user?.role !== 'admin') {
+    return res.status(403).json({ error: 'Forbidden' });
+  }
+
+  if (req.user.id === req.params.id) {
+    return res.status(400).json({ error: 'You cannot delete yourself' });
+  }
+
+  try {
+    await userService.deleteUser(req.params.id);
+    res.json({ success: true });
+  } catch (error: any) {
+    console.error('Delete user error:', error);
+    res.status(500).json({ error: error.message });
+  }
+};
