@@ -1,7 +1,7 @@
 import { Router } from 'express';
 import * as formController from '../controllers/form-controller.js';
 import { authenticate } from '../middleware/authenticate.js';
-import { upload } from '../config/upload.js';
+import { upload, getFilePath } from '../config/upload.js';
 
 const router = Router();
 
@@ -30,7 +30,6 @@ router.post('/upload', authenticate, upload.array('files', 10), (req, res) => {
 // Download endpoint
 router.get('/download/:filename', authenticate, (req, res) => {
   try {
-    const { getFilePath } = require('../config/upload.js');
     const filePath = getFilePath(req.params.filename);
     
     res.download(filePath, (err) => {
