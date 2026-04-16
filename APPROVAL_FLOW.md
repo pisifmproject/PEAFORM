@@ -65,14 +65,30 @@ PEAFORM menggunakan sistem approval bertingkat dengan validasi ketat untuk memas
 
 ## Access Control Rules
 
+### Dashboard Visibility (Status-Based Filtering)
+| Role | Dashboard Shows |
+|------|-----------------|
+| **User** | Hanya request yang mereka buat sendiri (semua status) |
+| **HOD** | Hanya request dari plant mereka dengan status `pending_hod` |
+| **HSE** | Hanya request dari plant mereka dengan status `pending_hse` |
+| **Factory Manager** | Hanya request dari plant mereka dengan status `pending_factory_manager` |
+| **Engineering Manager** | Hanya request dengan status `pending_engineering_manager` |
+| **Admin** | Semua request dari semua plant dan semua status |
+
+**Contoh:**
+- Request dengan status `pending_hod` → **HANYA muncul di dashboard HOD**
+- Request dengan status `pending_hse` → **HANYA muncul di dashboard HSE** (tidak muncul di HOD lagi)
+- Request dengan status `pending_factory_manager` → **HANYA muncul di dashboard Factory Manager**
+- Request dengan status `pending_engineering_manager` → **HANYA muncul di dashboard Engineering Manager**
+
 ### Plant-Based Access
 | Role | Access Rule |
 |------|-------------|
 | **User** | Hanya bisa melihat request yang mereka buat sendiri |
-| **HOD** | Hanya bisa melihat request dari plant mereka |
-| **HSE** | Hanya bisa melihat request dari plant mereka |
-| **Factory Manager** | Hanya bisa melihat request dari plant mereka |
-| **Engineering Manager** | Bisa melihat semua request dari semua plant |
+| **HOD** | Hanya bisa melihat request dari plant mereka + status `pending_hod` |
+| **HSE** | Hanya bisa melihat request dari plant mereka + status `pending_hse` |
+| **Factory Manager** | Hanya bisa melihat request dari plant mereka + status `pending_factory_manager` |
+| **Engineering Manager** | Bisa melihat request dari semua plant + status `pending_engineering_manager` |
 | **Admin** | Bisa melihat dan approve semua request |
 
 ### Approval Stage Validation
@@ -149,23 +165,103 @@ Any Stage → [Rejected] → rejected (END)
 
 **Scenario:** User Satu (Plant Cikupa) membuat request
 
-1. ✅ **HOD Plant Cikupa** melihat request → Approve
-2. ❌ **HOD Plant Cikokol** tidak bisa melihat request ini
-3. ✅ **HSE Plant Cikupa** melihat request → Approve
-4. ❌ **HSE Plant Semarang** tidak bisa melihat request ini
-5. ✅ **Factory Manager Plant Cikupa** melihat request → Approve
-6. ✅ **Engineering Manager** melihat request → Approve (FINAL)
-7. 📢 **BROADCAST**: Notifikasi dikirim ke:
-   - HOD Plant Cikupa
-   - HSE Plant Cikupa
-   - Factory Manager Plant Cikupa
-   - User Satu (applicant)
+### Dashboard Visibility Timeline:
+
+**1. Request Created (Status: `pending_hod`)**
+- ✅ **HOD Plant Cikupa** melihat request di dashboard
+- ❌ **HOD Plant Cikokol** tidak melihat (beda plant)
+- ❌ **HSE Plant Cikupa** tidak melihat (status belum `pending_hse`)
+- ❌ **Factory Manager Plant Cikupa** tidak melihat (status belum `pending_factory_manager`)
+- ❌ **Engineering Manager** tidak melihat (status belum `pending_engineering_manager`)
+
+**2. HOD Approve (Status berubah: `pending_hse`)**
+- ❌ **HOD Plant Cikupa** tidak melihat lagi (status sudah bukan `pending_hod`)
+- ✅ **HSE Plant Cikupa** sekarang melihat request di dashboard
+- ❌ **HSE Plant Semarang** tidak melihat (beda plant)
+- ❌ **Factory Manager Plant Cikupa** tidak melihat (status belum `pending_factory_manager`)
+
+**3. HSE Approve (Status berubah: `pending_factory_manager`)**
+- ❌ **HSE Plant Cikupa** tidak melihat lagi (status sudah bukan `pending_hse`)
+- ✅ **Factory Manager Plant Cikupa** sekarang melihat request di dashboard
+- ❌ **Engineering Manager** tidak melihat (status belum `pending_engineering_manager`)
+
+**4. Factory Manager Approve (Status berubah: `pending_engineering_manager`)**
+- ❌ **Factory Manager Plant Cikupa** tidak melihat lagi (status sudah bukan `pending_factory_manager`)
+- ✅ **Engineering Manager** sekarang melihat request di dashboard
+
+**5. Engineering Manager Approve (Status berubah: `approved`)**
+- ❌ **Engineering Manager** tidak melihat lagi (status sudah `approved`)
+- 📢 **BROADCAST**: Notifikasi dikirim ke:
+  - HOD Plant Cikupa
+  - HSE Plant Cikupa
+  - Factory Manager Plant Cikupa
+  - User Satu (applicant)
 
 ---
 
 ## Technical Implementation
 
-### Backend Validation (`form-controller.ts`)
+### Backend Validation (`form-service.ts`)
+```typescript
+export const getFormsByUser = async (user_id: string, role: string, plant?: string) => {
+  if (role === 'user') {
+    // User hanya melihat request mereka sendiri
+    return await db
+      .select()
+      .from(peaf_forms)
+      .where(eq(peaf_forms.applicant_id, user_id))
+      .orderBy(desc(peaf_forms.created_at));
+  } else if (role === 'hod' && plant) {
+    // HOD hanya melihat request dari plant mereka dengan status pending_hod
+    return await db
+      .select()
+      .from(peaf_forms)
+      .where(
+        and(
+          eq(peaf_forms.plant_location, plant),
+          eq(peaf_forms.status, 'pending_hod')
+        )
+      )
+      .orderBy(desc(peaf_forms.created_at));
+  } else if (role === 'hse' && plant) {
+    // HSE hanya melihat request dari plant mereka dengan status pending_hse
+    return await db
+      .select()
+      .from(peaf_forms)
+      .where(
+        and(
+          eq(peaf_forms.plant_location, plant),
+          eq(peaf_forms.status, 'pending_hse')
+        )
+      )
+      .orderBy(desc(peaf_forms.created_at));
+  } else if (role === 'factory_manager' && plant) {
+    // Factory Manager hanya melihat request dari plant mereka dengan status pending_factory_manager
+    return await db
+      .select()
+      .from(peaf_forms)
+      .where(
+        and(
+          eq(peaf_forms.plant_location, plant),
+          eq(peaf_forms.status, 'pending_factory_manager')
+        )
+      )
+      .orderBy(desc(peaf_forms.created_at));
+  } else if (role === 'engineering_manager') {
+    // Engineering Manager hanya melihat request dengan status pending_engineering_manager
+    return await db
+      .select()
+      .from(peaf_forms)
+      .where(eq(peaf_forms.status, 'pending_engineering_manager'))
+      .orderBy(desc(peaf_forms.created_at));
+  }
+
+  // Admin melihat semua request
+  return await db.select().from(peaf_forms).orderBy(desc(peaf_forms.created_at));
+};
+```
+
+### Approval Validation (`form-controller.ts`)
 ```typescript
 // 1. Plant check
 if (['hod', 'hse', 'factory_manager'].includes(user.role)) {
@@ -206,11 +302,13 @@ const checkCanApprove = () => {
 
 ## Summary
 
+✅ **Status-Based Dashboard**: Request hanya muncul di dashboard approver yang sesuai dengan status  
 ✅ **Plant Isolation**: Setiap plant hanya melihat request mereka sendiri  
 ✅ **Sequential Approval**: Atasan berikutnya tidak bisa approve sebelum atasan sebelumnya  
 ✅ **No Duplicate Approval**: User tidak bisa approve 2x untuk request yang sama  
 ✅ **Final Broadcast**: Ketika Engineering Manager approve, semua approver di plant tersebut mendapat notifikasi  
 ✅ **Role-Based Access**: Setiap role hanya bisa approve di stage yang sesuai  
+✅ **Clean Dashboard**: Request yang sudah di-approve tidak muncul lagi di dashboard approver sebelumnya  
 
 ---
 
