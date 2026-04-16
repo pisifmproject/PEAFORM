@@ -11,183 +11,271 @@ export const downloadFormPDF = async (req: AuthRequest, res: Response) => {
       return res.status(404).json({ error: 'Form not found' });
     }
 
-    // Check if form is approved
     if (form.status !== 'approved') {
       return res.status(403).json({ error: 'Only approved forms can be downloaded as PDF' });
     }
 
     const approvals = await formService.getFormApprovals(req.params.id);
 
-    // Create PDF document
     const doc = new PDFDocument({ 
       size: 'A4',
       margins: { top: 40, bottom: 40, left: 40, right: 40 }
     });
 
-    // Set response headers
     res.setHeader('Content-Type', 'application/pdf');
     res.setHeader('Content-Disposition', `attachment; filename=PEAF_${form.document_no.replace(/\//g, '_')}.pdf`);
 
-    // Pipe PDF to response
     doc.pipe(res);
 
     const pageWidth = 595.28;
     const pageHeight = 841.89;
     const margin = 40;
     const contentWidth = pageWidth - (margin * 2);
+    const labelWidth = 120;
+    const valueWidth = contentWidth - labelWidth - 30;
 
-    // Helper functions
-    const drawBox = (x: number, y: number, width: number, height: number) => {
-      doc.rect(x, y, width, height).stroke();
+    // Helper: Draw thin section header (SAP-style)
+    const drawSectionHeader = (y: number, text: string): number => {
+      doc.rect(margin + 10, y, contentWidth - 20, 18)
+         .fillAndStroke('#e6e6e6', '#000000');
+      doc.fillColor('#000000')
+         .fontSize(9)
+         .font('Helvetica-Bold')
+         .text(text.toUpperCase(), margin + 15, y + 5);
+      return y + 18;
     };
 
-    const drawHeaderBox = (x: number, y: number, width: number, height: number, text: string) => {
-      doc.rect(x, y, width, height).fillAndStroke('#f0f0f0', '#000000');
-      doc.fillColor('#000000').fontSize(9).font('Helvetica-Bold').text(text, x + 5, y + 5, { width: width - 10 });
+    // Helper: Draw field with label and value (grid-based)
+    const drawField = (y: number, label: string, value: string, fullWidth = false): number => {
+      const padding = 8;
+      const textWidth = fullWidth ? contentWidth - 30 : valueWidth;
+      
+      // Calculate dynamic height
+      const valueHeight = doc.heightOfString(value, { 
+        width: textWidth, 
+        lineGap: 2 
+      });
+      const boxHeight = Math.max(18, valueHeight + padding * 2);
+
+      // Draw box
+      doc.lineWidth(0.5);
+      doc.rect(margin + 10, y, contentWidth - 20, boxHeight).stroke();
+
+      if (fullWidth) {
+        // Full width field (no label column)
+        doc.fontSize(9)
+           .font('Helvetica')
+           .fillColor('#000000')
+           .text(value, margin + 15, y + padding, { 
+             width: textWidth, 
+             align: 'justify',
+             lineGap: 2
+           });
+      } else {
+        // Grid layout: label | value
+        // Draw vertical separator
+        doc.moveTo(margin + 10 + labelWidth, y)
+           .lineTo(margin + 10 + labelWidth, y + boxHeight)
+           .stroke();
+
+        // Label
+        doc.fontSize(8)
+           .font('Helvetica-Bold')
+           .fillColor('#000000')
+           .text(label, margin + 15, y + padding, { width: labelWidth - 10 });
+
+        // Value
+        doc.fontSize(9)
+           .font('Helvetica')
+           .text(value, margin + 15 + labelWidth, y + padding, { 
+             width: textWidth, 
+             lineGap: 2 
+           });
+      }
+
+      return y + boxHeight;
+    };
+
+    // Helper: Draw bullet list field
+    const drawListField = (y: number, label: string, items: string[]): number => {
+      const padding = 8;
+      const bulletText = items.map(item => `• ${item}`).join('\n');
+      
+      const textHeight = doc.heightOfString(bulletText, { 
+        width: valueWidth, 
+        lineGap: 2 
+      });
+      const boxHeight = Math.max(18, textHeight + padding * 2);
+
+      doc.lineWidth(0.5);
+      doc.rect(margin + 10, y, contentWidth - 20, boxHeight).stroke();
+
+      // Draw vertical separator
+      doc.moveTo(margin + 10 + labelWidth, y)
+         .lineTo(margin + 10 + labelWidth, y + boxHeight)
+         .stroke();
+
+      // Label
+      doc.fontSize(8)
+         .font('Helvetica-Bold')
+         .fillColor('#000000')
+         .text(label, margin + 15, y + padding, { width: labelWidth - 10 });
+
+      // Bullet list
+      doc.fontSize(8)
+         .font('Helvetica')
+         .text(bulletText, margin + 15 + labelWidth, y + padding, { 
+           width: valueWidth, 
+           lineGap: 2 
+         });
+
+      return y + boxHeight;
     };
 
     // ===== PAGE 1 =====
     
     // Outer border
-    drawBox(margin, margin, contentWidth, pageHeight - (margin * 2));
+    doc.lineWidth(0.7);
+    doc.rect(margin, margin, contentWidth, pageHeight - (margin * 2)).stroke();
 
     let currentY = margin + 10;
     
     // Company header
-    doc.fontSize(16).font('Helvetica-Bold').text('PT INDOFOOD FRITOLAY MAKMUR', margin + 10, currentY, { align: 'center', width: contentWidth - 20 });
+    doc.fontSize(16)
+       .font('Helvetica-Bold')
+       .text('PT INDOFOOD FRITOLAY MAKMUR', margin + 10, currentY, { 
+         align: 'center', 
+         width: contentWidth - 20 
+       });
     currentY += 20;
-    doc.fontSize(14).font('Helvetica-Bold').text('PROJECT & ENGINEERING APPROVAL FORM', margin + 10, currentY, { align: 'center', width: contentWidth - 20 });
+    
+    doc.fontSize(14)
+       .font('Helvetica-Bold')
+       .text('PROJECT & ENGINEERING APPROVAL FORM', margin + 10, currentY, { 
+         align: 'center', 
+         width: contentWidth - 20 
+       });
     currentY += 15;
-    doc.fontSize(10).font('Helvetica').text('(PEAF)', margin + 10, currentY, { align: 'center', width: contentWidth - 20 });
-    currentY += 20;
+    
+    doc.fontSize(10)
+       .font('Helvetica')
+       .text('(PEAF)', margin + 10, currentY, { 
+         align: 'center', 
+         width: contentWidth - 20 
+       });
+    currentY += 25;
 
     // Document number box
-    doc.rect(margin + 10, currentY, contentWidth - 20, 25).stroke();
-    doc.fontSize(10).font('Helvetica-Bold').text('Document No:', margin + 15, currentY + 8);
-    doc.fontSize(11).font('Helvetica-Bold').text(form.document_no, margin + 100, currentY + 8);
-    doc.fontSize(9).font('Helvetica').text(`Submitted on ${format(new Date(form.submission_date), 'MMMM dd, yyyy')}`, margin + 250, currentY + 8);
-    currentY += 35;
+    doc.lineWidth(0.5);
+    doc.rect(margin + 10, currentY, contentWidth - 20, 22).stroke();
+    doc.fontSize(9)
+       .font('Helvetica-Bold')
+       .text('Document No:', margin + 15, currentY + 7);
+    doc.fontSize(10)
+       .font('Helvetica-Bold')
+       .text(form.document_no, margin + 100, currentY + 7);
+    doc.fontSize(8)
+       .font('Helvetica')
+       .text(`Submitted: ${format(new Date(form.submission_date), 'MMM dd, yyyy')}`, 
+             margin + 250, currentY + 7);
+    currentY += 27;
 
     // Section I: Applicant Information
-    drawHeaderBox(margin + 10, currentY, contentWidth - 20, 20, 'I. APPLICANT INFORMATION');
-    currentY += 25;
-
-    const infoBoxHeight = 80;
-    doc.rect(margin + 10, currentY, contentWidth - 20, infoBoxHeight).stroke();
+    currentY = drawSectionHeader(currentY, 'I. Applicant Information');
+    currentY = drawField(currentY, 'Applicant Name', form.applicant_name);
+    currentY = drawField(currentY, 'Department', form.department);
+    currentY = drawField(currentY, 'Plant / Location', form.plant_location);
     
-    let infoY = currentY + 8;
-    doc.fontSize(9).font('Helvetica-Bold').text('Applicant Name:', margin + 15, infoY);
-    doc.fontSize(9).font('Helvetica').text(form.applicant_name, margin + 120, infoY);
-    infoY += 15;
-    
-    doc.fontSize(9).font('Helvetica-Bold').text('Department:', margin + 15, infoY);
-    doc.fontSize(9).font('Helvetica').text(form.department, margin + 120, infoY);
-    infoY += 15;
-    
-    doc.fontSize(9).font('Helvetica-Bold').text('Plant / Location:', margin + 15, infoY);
-    doc.fontSize(9).font('Helvetica').text(form.plant_location, margin + 120, infoY);
-    infoY += 15;
-    
-    doc.fontSize(9).font('Helvetica-Bold').text('Work Category:', margin + 15, infoY);
-    currentY += infoBoxHeight + 5;
-
-    // Work category boxes
+    // Work Category as list field
     const workCategories = form.work_category as string[];
-    const categoryBoxHeight = Math.max(40, workCategories.length * 12 + 20);
-    doc.rect(margin + 10, currentY, contentWidth - 20, categoryBoxHeight).stroke();
-    let catY = currentY + 8;
-    workCategories.forEach((cat: string) => {
-      doc.fontSize(8).font('Helvetica').text(`• ${cat}`, margin + 15, catY, { width: contentWidth - 30 });
-      catY += 12;
-    });
-    currentY += categoryBoxHeight + 10;
+    currentY = drawListField(currentY, 'Work Category', workCategories);
+    currentY += 5;
 
     // Section II: Project Description
-    drawHeaderBox(margin + 10, currentY, contentWidth - 20, 20, 'II. PROJECT DESCRIPTION & SCOPE OF WORK');
-    currentY += 25;
+    currentY = drawSectionHeader(currentY, 'II. Project Description & Scope of Work');
+    currentY = drawField(currentY, '', form.project_description, true);
+    currentY += 5;
 
-    const descHeight = 80;
-    doc.rect(margin + 10, currentY, contentWidth - 20, descHeight).stroke();
-    doc.fontSize(9).font('Helvetica').text(form.project_description, margin + 15, currentY + 8, { 
-      width: contentWidth - 30, 
-      align: 'justify',
-      lineGap: 2
-    });
-    currentY += descHeight + 10;
+    // Section III & IV: Two-column layout
+    currentY = drawSectionHeader(currentY, 'III. Technical Impact Analysis');
+    const sectionIIIStartY = currentY;
 
-    // Sections III & IV side by side
-    const halfWidth = (contentWidth - 30) / 2;
-    
-    // Section III: Technical Impact (Left)
-    drawHeaderBox(margin + 10, currentY, halfWidth, 20, 'III. TECHNICAL IMPACT');
-    drawHeaderBox(margin + 15 + halfWidth, currentY, halfWidth, 20, 'IV. SUPPORTING DOCUMENTS');
-    currentY += 25;
-
+    // Technical Impact (Left column)
     const technicalImpacts = form.technical_impact as string[];
+    const impactText = technicalImpacts && technicalImpacts.length > 0 
+      ? technicalImpacts.map(item => `• ${item}`).join('\n')
+      : 'No technical impacts selected.';
+    
+    const halfWidth = (contentWidth - 30) / 2;
+    const impactHeight = doc.heightOfString(impactText, { 
+      width: halfWidth - 10, 
+      lineGap: 2 
+    });
+
+    // Supporting Documents (Right column)
     const supportingDocs = form.supporting_documents as any[];
-    const sideBoxHeight = 120;
+    const docsText = supportingDocs && supportingDocs.length > 0
+      ? supportingDocs.map((d: any, i: number) => `${i + 1}. ${d.originalName}`).join('\n')
+      : 'No supporting documents uploaded.';
+    
+    const docsHeight = doc.heightOfString(docsText, { 
+      width: halfWidth - 10, 
+      lineGap: 2 
+    });
 
-    // Technical Impact box
-    doc.rect(margin + 10, currentY, halfWidth, sideBoxHeight).stroke();
-    let impactY = currentY + 8;
-    if (technicalImpacts && technicalImpacts.length > 0) {
-      technicalImpacts.slice(0, 8).forEach((impact: string) => {
-        doc.fontSize(7).font('Helvetica').text(`• ${impact.substring(0, 50)}${impact.length > 50 ? '...' : ''}`, margin + 15, impactY, { width: halfWidth - 10 });
-        impactY += 12;
-      });
-    } else {
-      doc.fontSize(8).font('Helvetica').text('No technical impacts', margin + 15, impactY);
+    const maxHeight = Math.max(impactHeight, docsHeight) + 16;
+
+    // Draw left box (Technical Impact)
+    doc.lineWidth(0.5);
+    doc.rect(margin + 10, currentY, halfWidth, maxHeight).stroke();
+    doc.fontSize(8)
+       .font('Helvetica')
+       .text(impactText, margin + 15, currentY + 8, { 
+         width: halfWidth - 10, 
+         lineGap: 2 
+       });
+
+    // Draw right box header
+    doc.rect(margin + 15 + halfWidth, sectionIIIStartY - 18, halfWidth, 18)
+       .fillAndStroke('#e6e6e6', '#000000');
+    doc.fillColor('#000000')
+       .fontSize(9)
+       .font('Helvetica-Bold')
+       .text('IV. SUPPORTING DOCUMENTS', margin + 20 + halfWidth, sectionIIIStartY - 13);
+
+    // Draw right box (Supporting Documents)
+    doc.rect(margin + 15 + halfWidth, currentY, halfWidth, maxHeight).stroke();
+    doc.fontSize(8)
+       .font('Helvetica')
+       .fillColor('#000000')
+       .text(docsText, margin + 20 + halfWidth, currentY + 8, { 
+         width: halfWidth - 10, 
+         lineGap: 2 
+       });
+
+    currentY += maxHeight + 5;
+
+    // Check if we need a new page
+    if (currentY > pageHeight - 200) {
+      doc.addPage();
+      currentY = margin + 10;
+      doc.lineWidth(0.7);
+      doc.rect(margin, margin, contentWidth, pageHeight - (margin * 2)).stroke();
     }
 
-    // Supporting Documents box
-    doc.rect(margin + 15 + halfWidth, currentY, halfWidth, sideBoxHeight).stroke();
-    let docsY = currentY + 8;
-    if (supportingDocs && supportingDocs.length > 0) {
-      supportingDocs.slice(0, 8).forEach((doc_file: any, index: number) => {
-        doc.fontSize(7).font('Helvetica').text(
-          `${index + 1}. ${doc_file.originalName.substring(0, 35)}${doc_file.originalName.length > 35 ? '...' : ''}`, 
-          margin + 20 + halfWidth, 
-          docsY, 
-          { width: halfWidth - 10 }
-        );
-        docsY += 12;
-      });
-    } else {
-      doc.fontSize(8).font('Helvetica').text('No documents', margin + 20 + halfWidth, docsY);
-    }
-    currentY += sideBoxHeight + 10;
-
-    // ===== PAGE 2 =====
-    doc.addPage();
-    currentY = margin + 10;
-
-    // Outer border for page 2
-    drawBox(margin, margin, contentWidth, pageHeight - (margin * 2));
+    // ===== PAGE 2 (if needed) or continue =====
 
     // Section V: Engineering Verification
-    drawHeaderBox(margin + 10, currentY, contentWidth - 20, 20, 'V. ENGINEERING VERIFICATION');
-    currentY += 25;
-
+    currentY = drawSectionHeader(currentY, 'V. Engineering Verification');
     const peApproval = approvals.find((a: any) => a.role === 'engineering_manager');
-    const engHeight = 60;
-    doc.rect(margin + 10, currentY, contentWidth - 20, engHeight).stroke();
-    let engY = currentY + 8;
-    
-    if (peApproval) {
-      doc.fontSize(9).font('Helvetica-Bold').text('Evaluation Notes:', margin + 15, engY);
-      engY += 15;
-      doc.fontSize(8).font('Helvetica').text(peApproval.notes || 'No notes provided.', margin + 15, engY, { width: contentWidth - 30 });
-      engY += 25;
-      doc.fontSize(9).font('Helvetica-Bold').text('Status:', margin + 15, engY);
-      doc.fontSize(9).font('Helvetica').text(peApproval.status, margin + 60, engY);
-    } else {
-      doc.fontSize(8).font('Helvetica').text('Waiting for Engineering Manager verification...', margin + 15, engY);
-    }
-    currentY += engHeight + 10;
+    const engNotes = peApproval 
+      ? `${peApproval.notes || 'No notes provided.'}\n\nStatus: ${peApproval.status}`
+      : 'Waiting for Engineering Manager verification...';
+    currentY = drawField(currentY, '', engNotes, true);
+    currentY += 5;
 
     // Section VI: Authorization Matrix
-    drawHeaderBox(margin + 10, currentY, contentWidth - 20, 20, 'VI. AUTHORIZATION MATRIX');
-    currentY += 25;
+    currentY = drawSectionHeader(currentY, 'VI. Authorization Matrix');
 
     const roles = [
       { role: 'Head of Department', key: 'hod' },
@@ -196,101 +284,95 @@ export const downloadFormPDF = async (req: AuthRequest, res: Response) => {
       { role: 'Project & Engineering Manager', key: 'engineering_manager' }
     ];
 
-    // Table header
     const colWidths = [130, 130, 80, 175];
     const tableX = margin + 10;
     let tableY = currentY;
 
-    doc.rect(tableX, tableY, colWidths[0], 25).fillAndStroke('#e0e0e0', '#000000');
-    doc.fillColor('#000000').fontSize(8).font('Helvetica-Bold').text('Role', tableX + 5, tableY + 8);
+    // Table header
+    doc.lineWidth(0.5);
+    doc.rect(tableX, tableY, colWidths[0], 20).fillAndStroke('#e6e6e6', '#000000');
+    doc.fillColor('#000000').fontSize(8).font('Helvetica-Bold')
+       .text('Role', tableX + 5, tableY + 6);
     
-    doc.rect(tableX + colWidths[0], tableY, colWidths[1], 25).fillAndStroke('#e0e0e0', '#000000');
-    doc.fillColor('#000000').fontSize(8).font('Helvetica-Bold').text('Approver Name', tableX + colWidths[0] + 5, tableY + 8);
+    doc.rect(tableX + colWidths[0], tableY, colWidths[1], 20).fillAndStroke('#e6e6e6', '#000000');
+    doc.fillColor('#000000').fontSize(8).font('Helvetica-Bold')
+       .text('Approver Name', tableX + colWidths[0] + 5, tableY + 6);
     
-    doc.rect(tableX + colWidths[0] + colWidths[1], tableY, colWidths[2], 25).fillAndStroke('#e0e0e0', '#000000');
-    doc.fillColor('#000000').fontSize(8).font('Helvetica-Bold').text('Signature', tableX + colWidths[0] + colWidths[1] + 5, tableY + 8);
+    doc.rect(tableX + colWidths[0] + colWidths[1], tableY, colWidths[2], 20)
+       .fillAndStroke('#e6e6e6', '#000000');
+    doc.fillColor('#000000').fontSize(8).font('Helvetica-Bold')
+       .text('Signature', tableX + colWidths[0] + colWidths[1] + 5, tableY + 6);
     
-    doc.rect(tableX + colWidths[0] + colWidths[1] + colWidths[2], tableY, colWidths[3], 25).fillAndStroke('#e0e0e0', '#000000');
-    doc.fillColor('#000000').fontSize(8).font('Helvetica-Bold').text('Date', tableX + colWidths[0] + colWidths[1] + colWidths[2] + 5, tableY + 8);
+    doc.rect(tableX + colWidths[0] + colWidths[1] + colWidths[2], tableY, colWidths[3], 20)
+       .fillAndStroke('#e6e6e6', '#000000');
+    doc.fillColor('#000000').fontSize(8).font('Helvetica-Bold')
+       .text('Date', tableX + colWidths[0] + colWidths[1] + colWidths[2] + 5, tableY + 6);
     
-    tableY += 25;
+    tableY += 20;
 
-    // Data rows
+    // Table rows
     roles.forEach((row) => {
       const approval = approvals.find((a: any) => a.role === row.key);
-      const rowHeight = 30;
+      const rowHeight = 25;
 
       doc.rect(tableX, tableY, colWidths[0], rowHeight).stroke();
-      doc.fontSize(8).font('Helvetica').text(row.role, tableX + 5, tableY + 10, { width: colWidths[0] - 10 });
+      doc.fontSize(8).font('Helvetica')
+         .fillColor('#000000')
+         .text(row.role, tableX + 5, tableY + 8, { width: colWidths[0] - 10 });
 
       doc.rect(tableX + colWidths[0], tableY, colWidths[1], rowHeight).stroke();
-      doc.fontSize(8).font('Helvetica').text(approval ? (approval.approver_name || 'System User') : '-', tableX + colWidths[0] + 5, tableY + 10, { width: colWidths[1] - 10 });
+      doc.fontSize(8).font('Helvetica')
+         .text(approval ? (approval.approver_name || 'System User') : '-', 
+               tableX + colWidths[0] + 5, tableY + 8, { width: colWidths[1] - 10 });
 
       doc.rect(tableX + colWidths[0] + colWidths[1], tableY, colWidths[2], rowHeight).stroke();
-      if (approval) {
-        doc.fontSize(7).font('Helvetica').text('✓ Verified', tableX + colWidths[0] + colWidths[1] + 5, tableY + 10);
-      } else {
-        doc.fontSize(8).font('Helvetica').text('-', tableX + colWidths[0] + colWidths[1] + 5, tableY + 10);
-      }
+      doc.fontSize(7).font('Helvetica')
+         .text(approval ? '✓ Verified' : '-', 
+               tableX + colWidths[0] + colWidths[1] + 5, tableY + 8);
 
       doc.rect(tableX + colWidths[0] + colWidths[1] + colWidths[2], tableY, colWidths[3], rowHeight).stroke();
-      if (approval) {
-        doc.fontSize(8).font('Helvetica').text(format(new Date(approval.created_at), 'MMM dd, yyyy'), tableX + colWidths[0] + colWidths[1] + colWidths[2] + 5, tableY + 10);
-      } else {
-        doc.fontSize(8).font('Helvetica').text('-', tableX + colWidths[0] + colWidths[1] + colWidths[2] + 5, tableY + 10);
-      }
+      doc.fontSize(8).font('Helvetica')
+         .text(approval ? format(new Date(approval.created_at), 'MMM dd, yyyy') : '-', 
+               tableX + colWidths[0] + colWidths[1] + colWidths[2] + 5, tableY + 8);
 
       tableY += rowHeight;
     });
-    currentY = tableY + 10;
+    currentY = tableY + 5;
+
+    // Check if we need a new page
+    if (currentY > pageHeight - 150) {
+      doc.addPage();
+      currentY = margin + 10;
+      doc.lineWidth(0.7);
+      doc.rect(margin, margin, contentWidth, pageHeight - (margin * 2)).stroke();
+    }
 
     // Section VII: Administration & Procurement
-    drawHeaderBox(margin + 10, currentY, contentWidth - 20, 20, 'VII. ADMINISTRATION & PROCUREMENT');
-    currentY += 25;
-
-    const adminHeight = 60;
-    doc.rect(margin + 10, currentY, contentWidth - 20, adminHeight).stroke();
-    let adminY = currentY + 8;
-    
-    doc.fontSize(9).font('Helvetica-Bold').text('PR Number:', margin + 15, adminY);
-    doc.fontSize(9).font('Helvetica').text(form.pr_number || 'Not Assigned', margin + 120, adminY);
-    adminY += 15;
-    
-    doc.fontSize(9).font('Helvetica-Bold').text('Budget Estimate:', margin + 15, adminY);
-    doc.fontSize(9).font('Helvetica').text(form.budget_estimate || 'Not Provided', margin + 120, adminY);
-    adminY += 15;
-    
-    doc.fontSize(9).font('Helvetica-Bold').text('Purchasing Status:', margin + 15, adminY);
-    doc.fontSize(9).font('Helvetica').text(form.purchasing_status || 'Pending', margin + 120, adminY);
-    currentY += adminHeight + 10;
+    currentY = drawSectionHeader(currentY, 'VII. Administration & Procurement');
+    currentY = drawField(currentY, 'PR Number', form.pr_number || 'Not Assigned');
+    currentY = drawField(currentY, 'Budget Estimate', form.budget_estimate || 'Not Provided');
+    currentY = drawField(currentY, 'Purchasing Status', form.purchasing_status || 'Pending');
+    currentY += 5;
 
     // Section VIII: HSE Evaluation
-    drawHeaderBox(margin + 10, currentY, contentWidth - 20, 20, 'VIII. HSE EVALUATION');
-    currentY += 25;
-
+    currentY = drawSectionHeader(currentY, 'VIII. HSE Evaluation');
     const hseApproval = approvals.find((a: any) => a.role === 'hse');
-    const hseHeight = 50;
-    doc.rect(margin + 10, currentY, contentWidth - 20, hseHeight).stroke();
-    let hseY = currentY + 8;
-    
-    if (hseApproval) {
-      doc.fontSize(9).font('Helvetica-Bold').text('HSE Notes:', margin + 15, hseY);
-      hseY += 15;
-      doc.fontSize(8).font('Helvetica').text(hseApproval.notes || 'No notes provided.', margin + 15, hseY, { width: contentWidth - 30 });
-    } else {
-      doc.fontSize(8).font('Helvetica').text('Waiting for HSE evaluation...', margin + 15, hseY);
-    }
-    currentY += hseHeight + 10;
+    const hseNotes = hseApproval 
+      ? (hseApproval.notes || 'No notes provided.')
+      : 'Waiting for HSE evaluation...';
+    currentY = drawField(currentY, '', hseNotes, true);
 
     // Footer
-    doc.fontSize(7).font('Helvetica').text(
-      `Generated on ${format(new Date(), 'MMMM dd, yyyy HH:mm')} | PEAF System`,
-      margin + 10,
-      pageHeight - margin - 20,
-      { align: 'center', width: contentWidth - 20 }
-    );
+    doc.fontSize(7)
+       .font('Helvetica')
+       .fillColor('#666666')
+       .text(
+         `Generated on ${format(new Date(), 'MMMM dd, yyyy HH:mm')} | PEAF System`,
+         margin + 10,
+         pageHeight - margin - 15,
+         { align: 'center', width: contentWidth - 20 }
+       );
 
-    // Finalize PDF
     doc.end();
   } catch (error: any) {
     console.error('PDF generation error:', error);

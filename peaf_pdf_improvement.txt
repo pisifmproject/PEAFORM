@@ -1,0 +1,55 @@
+PEAF PDF STYLING IMPROVEMENT GUIDE (SAP-LIKE)
+
+1.  GENERAL PROBLEM
+
+-   Fixed height boxes causing text overflow or empty space
+-   Field labels and values not aligned in grid
+-   Text truncated with “…”
+-   Inconsistent spacing and layout
+
+2.  CORE SOLUTION
+
+-   Use dynamic height (doc.heightOfString) for all content boxes
+-   Apply grid-based layout (label : value)
+-   Remove substring truncation
+-   Standardize spacing, font, and padding
+
+3.  KEY CHANGES
+
+A. STANDARD STYLE - Label font size: 8 - Value font size: 9 - Section
+header size: 9 - Header background: light gray (#e6e6e6) - Line width:
+0.5–0.7
+
+B. SECTION HEADER - Replace drawHeaderBox with thin header bar - Use
+uppercase text - Height: ~18px
+
+C. FIELD STRUCTURE - Use reusable drawField() function - Label width
+fixed (120px) - Value uses dynamic height - Box height = max(18, text
+height + padding)
+
+D. WORK CATEGORY - Merge into same field (not separate box) - Render as
+bullet list with line breaks - Use dynamic height
+
+E. PROJECT DESCRIPTION - Remove fixed height - Use dynamic text height -
+Full width layout
+
+F. TECHNICAL IMPACT & SUPPORTING DOCUMENTS - Remove substring + “…” -
+Render full text with wrapping - Use two-column layout - Height =
+max(left, right) + padding
+
+G. SUPPORTING DOCUMENTS - Show full filename - Use numbered list - No
+truncation
+
+H. APPLICANT INFO - Replace manual Y positioning with drawField() -
+Stack fields vertically
+
+I. AUTHORIZATION MATRIX - Use thinner borders - Reduce padding -
+Consistent font size - Align content properly
+
+4.  EXPECTED RESULT
+
+-   Clean SAP-style layout
+-   No text cut off
+-   No unnecessary whitespace
+-   Fully aligned grid system
+-   Professional PDF output
