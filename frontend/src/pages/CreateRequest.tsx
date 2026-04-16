@@ -192,11 +192,12 @@ export default function CreateRequest() {
 
     // Flatten supporting_documents from object to array
     const allFiles = Object.values(formData.supporting_documents).flat();
+    const menuItems = selectedDocTypes.map(type => ({ isMenu: true, type }));
 
     // Prepend Rp. before sending to server
     const submitData = {
       ...formData,
-      supporting_documents: allFiles,
+      supporting_documents: [...menuItems, ...allFiles],
       budget_estimate: formData.budget_estimate ? `Rp ${formData.budget_estimate}` : ''
     };
 

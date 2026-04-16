@@ -40,6 +40,10 @@ export const createForm = async (req: AuthRequest, res: Response) => {
     const renamedDocuments = [];
     if (supporting_documents && Array.isArray(supporting_documents)) {
       for (const doc of supporting_documents) {
+        if (doc.isMenu) {
+          renamedDocuments.push(doc);
+          continue;
+        }
         try {
           const newFilename = renameUploadedFile(
             doc.filename,

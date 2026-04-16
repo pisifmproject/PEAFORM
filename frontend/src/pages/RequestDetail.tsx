@@ -287,7 +287,7 @@ export default function RequestDetail() {
                   <h2 className="text-xl font-bold text-slate-900">IV. Supporting Documents</h2>
                 </div>
                 <div className="space-y-2">
-                  {form.supporting_documents && form.supporting_documents.length > 0 ? form.supporting_documents.map((doc: any, index: number) => (
+                  {form.supporting_documents && form.supporting_documents.filter((d: any) => !d.isMenu).length > 0 ? form.supporting_documents.filter((d: any) => !d.isMenu).map((doc: any, index: number) => (
                     <div key={index} className="flex items-center justify-between gap-3 p-3 bg-white border border-slate-100 rounded-xl shadow-sm hover:border-blue-200 hover:bg-blue-50/30 transition-all group">
                       <div className="flex items-center gap-3 flex-1 min-w-0">
                         <FileText className="h-5 w-5 text-blue-500 flex-shrink-0" />
