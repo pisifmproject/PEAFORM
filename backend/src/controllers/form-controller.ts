@@ -141,11 +141,22 @@ export const approveForm = async (req: AuthRequest, res: Response) => {
       return res.status(404).json({ error: 'User not found' });
     }
 
-    // Plant check for specific roles
+    // Plant check for specific roles - MUST match plant
     if (['hod', 'hse', 'factory_manager'].includes(user.role)) {
       if (form.plant_location !== user.plant) {
         return res.status(403).json({ error: 'You can only approve requests for your assigned plant.' });
       }
+    }
+
+    // Get existing approvals to check workflow
+    const existingApprovals = await formService.getFormApprovals(req.params.id);
+
+    // Check if user already approved
+    const userAlreadyApproved = existingApprovals.some(
+      (a: any) => a.approver_id === user.id && (a.status === 'Approved' || a.status === 'Approved with Conditions')
+    );
+    if (userAlreadyApproved) {
+      return res.status(400).json({ error: 'You have already approved this request.' });
     }
 
     // Determine the role for this approval
@@ -155,6 +166,19 @@ export const approveForm = async (req: AuthRequest, res: Response) => {
       else if (form.status === 'pending_hse') approval_role = 'hse';
       else if (form.status === 'pending_factory_manager') approval_role = 'factory_manager';
       else if (form.status === 'pending_engineering_manager') approval_role = 'engineering_manager';
+    }
+
+    // STRICT WORKFLOW CHECK: User role must match current form status
+    const canApprove = 
+      (form.status === 'pending_hod' && (user.role === 'hod' || user.role === 'admin')) ||
+      (form.status === 'pending_hse' && (user.role === 'hse' || user.role === 'admin')) ||
+      (form.status === 'pending_factory_manager' && (user.role === 'factory_manager' || user.role === 'admin')) ||
+      (form.status === 'pending_engineering_manager' && (user.role === 'engineering_manager' || user.role === 'admin'));
+
+    if (!canApprove) {
+      return res.status(403).json({ 
+        error: 'You cannot approve this request at this stage. Please wait for the previous approver.' 
+      });
     }
 
     await formService.createApproval({
@@ -198,6 +222,26 @@ export const approveForm = async (req: AuthRequest, res: Response) => {
         next_role = 'engineering_manager';
       } else if (current_status === 'pending_engineering_manager') {
         new_status = 'approved';
+
+        // Broadcast to all approvers at the same plant
+        await notificationService.notifyApprovers(
+          'hod',
+          form.plant_location,
+          `PEAF request (${form.document_no}) has been fully approved by Engineering Manager.`,
+          form.id
+        );
+        await notificationService.notifyApprovers(
+          'hse',
+          form.plant_location,
+          `PEAF request (${form.document_no}) has been fully approved by Engineering Manager.`,
+          form.id
+        );
+        await notificationService.notifyApprovers(
+          'factory_manager',
+          form.plant_location,
+          `PEAF request (${form.document_no}) has been fully approved by Engineering Manager.`,
+          form.id
+        );
 
         // Notify applicant of final approval
         await notificationService.createNotification({
