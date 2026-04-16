@@ -3,7 +3,7 @@ import { useParams, useNavigate } from 'react-router-dom';
 import Layout from '../components/Layout';
 import { useAuth } from '../context/AuthContext';
 import { format } from 'date-fns';
-import { motion, AnimatePresence } from 'motion/react';
+import { motion } from 'motion/react';
 import { 
   CheckCircle2, 
   XCircle, 
@@ -21,9 +21,7 @@ import {
   AlertCircle,
   ChevronRight,
   Info,
-  Eye,
-  Download,
-  X
+  Download
 } from 'lucide-react';
 
 export default function RequestDetail() {
@@ -39,10 +37,6 @@ export default function RequestDetail() {
   const [approvalNotes, setApprovalNotes] = useState('');
   const [submitting, setSubmitting] = useState(false);
 
-  // File preview state
-  const [previewFile, setPreviewFile] = useState<any>(null);
-  const [showPreview, setShowPreview] = useState(false);
-
   useEffect(() => {
     fetch(`/api/forms/${id}`)
       .then(res => {
@@ -54,21 +48,8 @@ export default function RequestDetail() {
       .finally(() => setLoading(false));
   }, [id]);
 
-  const handleViewFile = (file: any) => {
-    setPreviewFile(file);
-    setShowPreview(true);
-  };
-
   const handleDownloadFile = (filename: string) => {
     window.open(`/api/forms/download/${filename}`, '_blank');
-  };
-
-  const getFilePreviewUrl = (file: any) => {
-    return `/api/forms/download/${file.filename}`;
-  };
-
-  const canPreviewFile = (mimetype: string) => {
-    return mimetype.includes('pdf') || mimetype.includes('image');
   };
 
   const handleApprove = async (e: React.FormEvent) => {
@@ -315,26 +296,14 @@ export default function RequestDetail() {
                           <p className="text-xs text-slate-500">{(doc.size / 1024).toFixed(2)} KB</p>
                         </div>
                       </div>
-                      <div className="flex items-center gap-2 flex-shrink-0 opacity-0 group-hover:opacity-100 transition-opacity">
-                        {canPreviewFile(doc.mimetype) && (
-                          <button
-                            type="button"
-                            onClick={() => handleViewFile(doc)}
-                            className="px-3 py-1.5 text-xs font-bold text-blue-600 hover:text-blue-700 hover:bg-blue-50 rounded-lg transition-all flex items-center gap-1"
-                          >
-                            <Eye className="h-3 w-3" />
-                            View
-                          </button>
-                        )}
-                        <button
-                          type="button"
-                          onClick={() => handleDownloadFile(doc.filename)}
-                          className="px-3 py-1.5 text-xs font-bold text-emerald-600 hover:text-emerald-700 hover:bg-emerald-50 rounded-lg transition-all flex items-center gap-1"
-                        >
-                          <Download className="h-3 w-3" />
-                          Download
-                        </button>
-                      </div>
+                      <button
+                        type="button"
+                        onClick={() => handleDownloadFile(doc.filename)}
+                        className="flex-shrink-0 px-3 py-1.5 text-xs font-bold text-emerald-600 hover:text-emerald-700 hover:bg-emerald-50 rounded-lg transition-all flex items-center gap-1 opacity-0 group-hover:opacity-100"
+                      >
+                        <Download className="h-3 w-3" />
+                        Download
+                      </button>
                     </div>
                   )) : (
                     <p className="text-sm text-slate-400 italic">No supporting documents uploaded.</p>
@@ -657,86 +626,6 @@ export default function RequestDetail() {
           </div>
         </div>
       </motion.div>
-
-      {/* File Preview Modal */}
-      <AnimatePresence>
-        {showPreview && previewFile && (
-          <div className="fixed inset-0 z-50 flex items-center justify-center p-4">
-            <motion.div 
-              initial={{ opacity: 0 }}
-              animate={{ opacity: 1 }}
-              exit={{ opacity: 0 }}
-              className="fixed inset-0 bg-slate-900/80 backdrop-blur-sm" 
-              onClick={() => setShowPreview(false)}
-            />
-            
-            <motion.div 
-              initial={{ opacity: 0, scale: 0.9, y: 20 }}
-              animate={{ opacity: 1, scale: 1, y: 0 }}
-              exit={{ opacity: 0, scale: 0.9, y: 20 }}
-              className="relative bg-white rounded-2xl shadow-2xl w-full max-w-6xl max-h-[90vh] overflow-hidden flex flex-col"
-            >
-              {/* Header */}
-              <div className="flex items-center justify-between p-4 border-b border-slate-200 bg-slate-50">
-                <div className="flex items-center gap-3 flex-1 min-w-0">
-                  <FileText className="h-5 w-5 text-blue-600 flex-shrink-0" />
-                  <div className="flex-1 min-w-0">
-                    <h3 className="text-sm font-bold text-slate-900 truncate">{previewFile.originalName}</h3>
-                    <p className="text-xs text-slate-500">{(previewFile.size / 1024).toFixed(2)} KB</p>
-                  </div>
-                </div>
-                <div className="flex items-center gap-2">
-                  <button
-                    onClick={() => handleDownloadFile(previewFile.filename)}
-                    className="px-3 py-2 text-xs font-bold text-emerald-600 hover:text-emerald-700 hover:bg-emerald-50 rounded-lg transition-all flex items-center gap-1"
-                  >
-                    <Download className="h-4 w-4" />
-                    Download
-                  </button>
-                  <button
-                    onClick={() => setShowPreview(false)}
-                    className="p-2 text-slate-400 hover:text-slate-600 hover:bg-slate-100 rounded-lg transition-all"
-                  >
-                    <X className="h-5 w-5" />
-                  </button>
-                </div>
-              </div>
-
-              {/* Preview Content */}
-              <div className="flex-1 overflow-auto bg-slate-100 p-4">
-                {previewFile.mimetype.includes('pdf') ? (
-                  <iframe
-                    src={getFilePreviewUrl(previewFile)}
-                    className="w-full h-full min-h-[600px] bg-white rounded-lg shadow-inner"
-                    title={previewFile.originalName}
-                  />
-                ) : previewFile.mimetype.includes('image') ? (
-                  <div className="flex items-center justify-center h-full">
-                    <img
-                      src={getFilePreviewUrl(previewFile)}
-                      alt={previewFile.originalName}
-                      className="max-w-full max-h-full object-contain rounded-lg shadow-lg"
-                    />
-                  </div>
-                ) : (
-                  <div className="flex flex-col items-center justify-center h-full text-center p-8">
-                    <FileText className="h-16 w-16 text-slate-300 mb-4" />
-                    <p className="text-sm font-medium text-slate-600 mb-2">Preview not available for this file type</p>
-                    <p className="text-xs text-slate-400 mb-4">Please download the file to view it</p>
-                    <button
-                      onClick={() => handleDownloadFile(previewFile.filename)}
-                      className="px-4 py-2 bg-emerald-600 hover:bg-emerald-700 text-white text-sm font-bold rounded-lg transition-all flex items-center gap-2"
-                    >
-                      <Download className="h-4 w-4" />
-                      Download File
-                    </button>
-                  </div>
-                )}
-              </div>
-            </motion.div>
-          </div>
-        )}
-      </AnimatePresence>
     </Layout>
   );
 }
