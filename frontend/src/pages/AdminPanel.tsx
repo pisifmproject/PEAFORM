@@ -27,10 +27,10 @@ const ROLES = [
 const PLANTS = ["Plant Cikupa", "Plant Cikokol", "Plant Semarang"];
 
 const ROLE_DISPLAY_NAMES: Record<string, string> = {
-  admin: "ADMIN",
+  admin: "ADMINISTRATOR",
   user: "USER",
-  hod: "HOD",
-  hse: "HSE",
+  hod: "DEPARTMENT HEAD",
+  hse: "HEALTH, SAFETY & ENVIRONMENT",
   factory_manager: "FACTORY MANAGER",
   engineering_manager: "PROJECT & ENGINEERING MANAGER",
 };

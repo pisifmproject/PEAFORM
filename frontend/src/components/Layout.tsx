@@ -12,6 +12,18 @@ export default function Layout({ children }: { children: ReactNode }) {
   const [showNotifications, setShowNotifications] = useState(false);
   const dropdownRef = useRef<HTMLDivElement>(null);
 
+  const getRoleLabel = (role: string) => {
+    const roleLabels: Record<string, string> = {
+      'user': 'User',
+      'admin': 'Administrator',
+      'hod': 'Department Head',
+      'hse': 'Health, Safety & Environment',
+      'factory_manager': 'Factory Manager',
+      'engineering_manager': 'Project & Engineering Manager'
+    };
+    return roleLabels[role] || role;
+  };
+
   useEffect(() => {
     fetchNotifications();
     const interval = setInterval(fetchNotifications, 30000); // Poll every 30s
@@ -115,7 +127,7 @@ export default function Layout({ children }: { children: ReactNode }) {
             </div>
             <div className="overflow-hidden">
               <p className="text-sm font-medium text-gray-900 truncate">{user?.name}</p>
-              <p className="text-xs text-gray-500 truncate">{user?.role}</p>
+              <p className="text-xs text-gray-500 truncate">{getRoleLabel(user?.role || '')}</p>
             </div>
           </div>
           <button

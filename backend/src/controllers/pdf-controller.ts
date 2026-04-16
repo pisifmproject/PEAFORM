@@ -293,8 +293,8 @@ export const downloadFormPDF = async (req: AuthRequest, res: Response) => {
     currentY += engBoxHeight + 5;
 
     const roles = [
-      { role: 'Head of Department', key: 'hod' },
-      { role: 'HSE', key: 'hse' },
+      { role: 'Department Head', key: 'hod' },
+      { role: 'Health, Safety & Environment', key: 'hse' },
       { role: 'Factory Manager', key: 'factory_manager' },
       { role: 'Project & Engineering Manager', key: 'engineering_manager' }
     ];
