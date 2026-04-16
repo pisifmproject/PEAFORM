@@ -1,4 +1,4 @@
-import { eq, desc, and, gte, lt, sql } from 'drizzle-orm';
+import { eq, desc, and, gte, lt, sql, or } from 'drizzle-orm';
 import { db } from '../db/index.js';
 import { peaf_forms, peaf_approvals, users } from '../db/schema.js';
 import { toRoman } from '../config/roman-numerals.js';
@@ -61,47 +61,61 @@ export const getFormsByUser = async (user_id: string, role: string, plant?: stri
       .where(eq(peaf_forms.applicant_id, user_id))
       .orderBy(desc(peaf_forms.created_at));
   } else if (role === 'hod' && plant) {
-    // HOD hanya melihat request dari plant mereka dengan status pending_hod
+    // HOD melihat: pending_hod (untuk approve) + approved (untuk info)
     return await db
       .select()
       .from(peaf_forms)
       .where(
         and(
           eq(peaf_forms.plant_location, plant),
-          eq(peaf_forms.status, 'pending_hod')
+          or(
+            eq(peaf_forms.status, 'pending_hod'),
+            eq(peaf_forms.status, 'approved')
+          )
         )
       )
       .orderBy(desc(peaf_forms.created_at));
   } else if (role === 'hse' && plant) {
-    // HSE hanya melihat request dari plant mereka dengan status pending_hse
+    // HSE melihat: pending_hse (untuk approve) + approved (untuk info)
     return await db
       .select()
       .from(peaf_forms)
       .where(
         and(
           eq(peaf_forms.plant_location, plant),
-          eq(peaf_forms.status, 'pending_hse')
+          or(
+            eq(peaf_forms.status, 'pending_hse'),
+            eq(peaf_forms.status, 'approved')
+          )
         )
       )
       .orderBy(desc(peaf_forms.created_at));
   } else if (role === 'factory_manager' && plant) {
-    // Factory Manager hanya melihat request dari plant mereka dengan status pending_factory_manager
+    // Factory Manager melihat: pending_factory_manager (untuk approve) + approved (untuk info)
     return await db
       .select()
       .from(peaf_forms)
       .where(
         and(
           eq(peaf_forms.plant_location, plant),
-          eq(peaf_forms.status, 'pending_factory_manager')
+          or(
+            eq(peaf_forms.status, 'pending_factory_manager'),
+            eq(peaf_forms.status, 'approved')
+          )
         )
       )
       .orderBy(desc(peaf_forms.created_at));
   } else if (role === 'engineering_manager') {
-    // Engineering Manager hanya melihat request dengan status pending_engineering_manager
+    // Engineering Manager melihat: pending_engineering_manager (untuk approve) + approved (untuk info)
     return await db
       .select()
       .from(peaf_forms)
-      .where(eq(peaf_forms.status, 'pending_engineering_manager'))
+      .where(
+        or(
+          eq(peaf_forms.status, 'pending_engineering_manager'),
+          eq(peaf_forms.status, 'approved')
+        )
+      )
       .orderBy(desc(peaf_forms.created_at));
   }
 
