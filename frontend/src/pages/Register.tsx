@@ -1,19 +1,32 @@
-import React, { useState } from 'react';
-import { Link, useNavigate } from 'react-router-dom';
-import { FileText, ArrowLeft, User, Mail, Lock, ShieldCheck, ArrowRight, BadgeCheck } from 'lucide-react';
-import { motion } from 'motion/react';
+import React, { useState } from "react";
+import { Link, useNavigate } from "react-router-dom";
+import {
+  FileText,
+  ArrowLeft,
+  User,
+  Mail,
+  Lock,
+  ShieldCheck,
+  ArrowRight,
+  BadgeCheck,
+  Eye,
+  EyeOff,
+} from "lucide-react";
+import { motion } from "motion/react";
 
 export default function Register() {
   const [formData, setFormData] = useState({
-    nik: '',
-    username: '',
-    email: '',
-    name: '',
-    password: '',
-    confirmPassword: ''
+    nik: "",
+    username: "",
+    email: "",
+    name: "",
+    password: "",
+    confirmPassword: "",
   });
-  const [error, setError] = useState('');
+  const [error, setError] = useState("");
   const [loading, setLoading] = useState(false);
+  const [showPassword, setShowPassword] = useState(false);
+  const [showConfirmPassword, setShowConfirmPassword] = useState(false);
   const navigate = useNavigate();
 
   const handleChange = (e: React.ChangeEvent<HTMLInputElement>) => {
@@ -22,28 +35,28 @@ export default function Register() {
 
   const handleSubmit = async (e: React.FormEvent) => {
     e.preventDefault();
-    setError('');
+    setError("");
 
     if (formData.password !== formData.confirmPassword) {
-      return setError('Passwords do not match');
+      return setError("Passwords do not match");
     }
 
     setLoading(true);
 
     try {
-      const res = await fetch('/api/auth/register', {
-        method: 'POST',
-        headers: { 'Content-Type': 'application/json' },
+      const res = await fetch("/api/auth/register", {
+        method: "POST",
+        headers: { "Content-Type": "application/json" },
         body: JSON.stringify(formData),
       });
 
       const data = await res.json();
 
       if (!res.ok) {
-        throw new Error(data.error || 'Registration failed');
+        throw new Error(data.error || "Registration failed");
       }
 
-      navigate('/login');
+      navigate("/login");
     } catch (err: any) {
       setError(err.message);
     } finally {
@@ -56,23 +69,27 @@ export default function Register() {
       {/* Left Side - Branding & Visual */}
       <div className="hidden lg:flex lg:w-1/2 relative bg-slate-900 overflow-hidden">
         <div className="absolute inset-0 z-0 opacity-40">
-          <img 
-            src="https://picsum.photos/seed/factory/1200/1200" 
-            alt="Factory background" 
+          <img
+            src="https://picsum.photos/seed/factory/1200/1200"
+            alt="Factory background"
             className="w-full h-full object-cover"
             referrerPolicy="no-referrer"
           />
         </div>
         <div className="absolute inset-0 bg-gradient-to-br from-blue-700/80 to-slate-900/90 z-10" />
-        
+
         <div className="relative z-20 flex flex-col justify-between p-16 w-full">
           <Link to="/" className="flex items-center gap-3 group">
             <div className="bg-white p-2 rounded-xl group-hover:scale-110 transition-transform">
               <FileText className="h-8 w-8 text-blue-600" />
             </div>
             <div className="flex flex-col leading-tight">
-              <span className="font-bold text-2xl text-white tracking-tight">PEAF SYSTEM</span>
-              <span className="text-[10px] font-bold text-blue-100 uppercase tracking-[0.2em]">PT Indofood Fortuna Makmur</span>
+              <span className="font-bold text-2xl text-white tracking-tight">
+                PEAF SYSTEM
+              </span>
+              <span className="text-[10px] font-bold text-blue-100 uppercase tracking-[0.2em]">
+                PT Indofood Fortuna Makmur
+              </span>
             </div>
           </Link>
 
@@ -90,7 +107,7 @@ export default function Register() {
                   "Digitalized PEAF form submission",
                   "Automated multi-level approval routing",
                   "Real-time status notifications",
-                  "Centralized project documentation"
+                  "Centralized project documentation",
                 ].map((text, i) => (
                   <li key={i} className="flex items-center gap-3 text-blue-100">
                     <BadgeCheck className="w-5 h-5 text-blue-400 flex-shrink-0" />
@@ -109,7 +126,10 @@ export default function Register() {
 
       {/* Right Side - Register Form */}
       <div className="w-full lg:w-1/2 flex flex-col justify-center px-8 sm:px-16 lg:px-24 bg-white relative py-20 overflow-y-auto">
-        <Link to="/" className="absolute top-8 right-8 flex items-center text-sm font-semibold text-slate-500 hover:text-slate-900 transition-colors">
+        <Link
+          to="/"
+          className="absolute top-8 right-8 flex items-center text-sm font-semibold text-slate-500 hover:text-slate-900 transition-colors"
+        >
           <ArrowLeft className="w-4 h-4 mr-2" />
           Back to Home
         </Link>
@@ -121,13 +141,17 @@ export default function Register() {
             transition={{ duration: 0.5 }}
           >
             <div className="mb-8">
-              <h1 className="text-3xl font-extrabold text-slate-900 mb-2">Create Account</h1>
-              <p className="text-slate-500 font-medium">Join us to start managing your engineering requests.</p>
+              <h1 className="text-3xl font-extrabold text-slate-900 mb-2">
+                Create Account
+              </h1>
+              <p className="text-slate-500 font-medium">
+                Join us to start managing your engineering requests.
+              </p>
             </div>
 
             <form className="space-y-5" onSubmit={handleSubmit}>
               {error && (
-                <motion.div 
+                <motion.div
                   initial={{ opacity: 0, scale: 0.95 }}
                   animate={{ opacity: 1, scale: 1 }}
                   className="bg-red-50 border border-red-100 text-red-600 p-4 rounded-xl text-sm font-medium flex items-center gap-3"
@@ -136,10 +160,15 @@ export default function Register() {
                   {error}
                 </motion.div>
               )}
-              
+
               <div className="grid grid-cols-1 sm:grid-cols-2 gap-5">
                 <div className="space-y-2">
-                  <label htmlFor="nik" className="text-sm font-bold text-slate-700 ml-1">NIK</label>
+                  <label
+                    htmlFor="nik"
+                    className="text-sm font-bold text-slate-700 ml-1"
+                  >
+                    NIK
+                  </label>
                   <input
                     id="nik"
                     name="nik"
@@ -152,7 +181,12 @@ export default function Register() {
                   />
                 </div>
                 <div className="space-y-2">
-                  <label htmlFor="username" className="text-sm font-bold text-slate-700 ml-1">Username</label>
+                  <label
+                    htmlFor="username"
+                    className="text-sm font-bold text-slate-700 ml-1"
+                  >
+                    Username
+                  </label>
                   <input
                     id="username"
                     name="username"
@@ -167,7 +201,12 @@ export default function Register() {
               </div>
 
               <div className="space-y-2">
-                <label htmlFor="name" className="text-sm font-bold text-slate-700 ml-1">Full Name</label>
+                <label
+                  htmlFor="name"
+                  className="text-sm font-bold text-slate-700 ml-1"
+                >
+                  Full Name
+                </label>
                 <div className="relative group">
                   <div className="absolute inset-y-0 left-0 pl-4 flex items-center pointer-events-none">
                     <User className="h-5 w-5 text-slate-400 group-focus-within:text-blue-600 transition-colors" />
@@ -186,7 +225,12 @@ export default function Register() {
               </div>
 
               <div className="space-y-2">
-                <label htmlFor="email" className="text-sm font-bold text-slate-700 ml-1">Email Address</label>
+                <label
+                  htmlFor="email"
+                  className="text-sm font-bold text-slate-700 ml-1"
+                >
+                  Email Address
+                </label>
                 <div className="relative group">
                   <div className="absolute inset-y-0 left-0 pl-4 flex items-center pointer-events-none">
                     <Mail className="h-5 w-5 text-slate-400 group-focus-within:text-blue-600 transition-colors" />
@@ -206,7 +250,12 @@ export default function Register() {
 
               <div className="grid grid-cols-1 sm:grid-cols-2 gap-5">
                 <div className="space-y-2">
-                  <label htmlFor="password" className="text-sm font-bold text-slate-700 ml-1">Password</label>
+                  <label
+                    htmlFor="password"
+                    className="text-sm font-bold text-slate-700 ml-1"
+                  >
+                    Password
+                  </label>
                   <div className="relative group">
                     <div className="absolute inset-y-0 left-0 pl-4 flex items-center pointer-events-none">
                       <Lock className="h-5 w-5 text-slate-400 group-focus-within:text-blue-600 transition-colors" />
@@ -214,17 +263,33 @@ export default function Register() {
                     <input
                       id="password"
                       name="password"
-                      type="password"
+                      type={showPassword ? "text" : "password"}
                       required
                       placeholder="••••••••"
                       value={formData.password}
                       onChange={handleChange}
-                      className="block w-full rounded-2xl border-slate-200 bg-slate-50/50 py-3.5 pl-12 pr-4 text-slate-900 placeholder:text-slate-400 focus:ring-2 focus:ring-blue-600 focus:border-transparent focus:bg-white transition-all sm:text-sm outline-none border"
+                      className="block w-full rounded-2xl border-slate-200 bg-slate-50/50 py-3.5 pl-12 pr-12 text-slate-900 placeholder:text-slate-400 focus:ring-2 focus:ring-blue-600 focus:border-transparent focus:bg-white transition-all sm:text-sm outline-none border"
                     />
+                    <button
+                      type="button"
+                      onClick={() => setShowPassword(!showPassword)}
+                      className="absolute inset-y-0 right-0 pr-4 flex items-center text-slate-400 hover:text-slate-600 transition-colors"
+                    >
+                      {showPassword ? (
+                        <EyeOff className="h-5 w-5" />
+                      ) : (
+                        <Eye className="h-5 w-5" />
+                      )}
+                    </button>
                   </div>
                 </div>
                 <div className="space-y-2">
-                  <label htmlFor="confirmPassword" className="text-sm font-bold text-slate-700 ml-1">Confirm</label>
+                  <label
+                    htmlFor="confirmPassword"
+                    className="text-sm font-bold text-slate-700 ml-1"
+                  >
+                    Confirm
+                  </label>
                   <div className="relative group">
                     <div className="absolute inset-y-0 left-0 pl-4 flex items-center pointer-events-none">
                       <Lock className="h-5 w-5 text-slate-400 group-focus-within:text-blue-600 transition-colors" />
@@ -232,13 +297,26 @@ export default function Register() {
                     <input
                       id="confirmPassword"
                       name="confirmPassword"
-                      type="password"
+                      type={showConfirmPassword ? "text" : "password"}
                       required
                       placeholder="••••••••"
                       value={formData.confirmPassword}
                       onChange={handleChange}
-                      className="block w-full rounded-2xl border-slate-200 bg-slate-50/50 py-3.5 pl-12 pr-4 text-slate-900 placeholder:text-slate-400 focus:ring-2 focus:ring-blue-600 focus:border-transparent focus:bg-white transition-all sm:text-sm outline-none border"
+                      className="block w-full rounded-2xl border-slate-200 bg-slate-50/50 py-3.5 pl-12 pr-12 text-slate-900 placeholder:text-slate-400 focus:ring-2 focus:ring-blue-600 focus:border-transparent focus:bg-white transition-all sm:text-sm outline-none border"
                     />
+                    <button
+                      type="button"
+                      onClick={() =>
+                        setShowConfirmPassword(!showConfirmPassword)
+                      }
+                      className="absolute inset-y-0 right-0 pr-4 flex items-center text-slate-400 hover:text-slate-600 transition-colors"
+                    >
+                      {showConfirmPassword ? (
+                        <EyeOff className="h-5 w-5" />
+                      ) : (
+                        <Eye className="h-5 w-5" />
+                      )}
+                    </button>
                   </div>
                 </div>
               </div>
@@ -251,15 +329,20 @@ export default function Register() {
                 {loading ? (
                   <div className="w-5 h-5 border-2 border-white/30 border-t-white rounded-full animate-spin" />
                 ) : (
-                  <>Create Account <ArrowRight className="w-5 h-5" /></>
+                  <>
+                    Create Account <ArrowRight className="w-5 h-5" />
+                  </>
                 )}
               </button>
             </form>
 
             <div className="mt-8 text-center">
               <p className="text-sm text-slate-500 font-medium">
-                Already have an account?{' '}
-                <Link to="/login" className="text-blue-600 font-bold hover:text-blue-700 transition-colors">
+                Already have an account?{" "}
+                <Link
+                  to="/login"
+                  className="text-blue-600 font-bold hover:text-blue-700 transition-colors"
+                >
                   Sign in here
                 </Link>
               </p>
@@ -267,7 +350,9 @@ export default function Register() {
 
             <div className="mt-10 flex items-center justify-center gap-2 text-slate-400">
               <ShieldCheck className="w-4 h-4" />
-              <span className="text-[10px] font-bold uppercase tracking-widest">Secure Enterprise Registration</span>
+              <span className="text-[10px] font-bold uppercase tracking-widest">
+                Secure Enterprise Registration
+              </span>
             </div>
           </motion.div>
         </div>

@@ -106,3 +106,13 @@ export const updateFormStatus = async (id: string, status: string) => {
 
   return form;
 };
+
+export const updateFormDocuments = async (id: string, documents: any[]) => {
+  const [form] = await db
+    .update(peaf_forms)
+    .set({ supporting_documents: documents, updated_at: new Date() })
+    .where(eq(peaf_forms.id, id))
+    .returning();
+
+  return form;
+};

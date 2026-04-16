@@ -3,6 +3,7 @@ import { AuthRequest } from '../middleware/authenticate.js';
 import * as formService from '../services/form-service.js';
 import * as userService from '../services/user-service.js';
 import * as notificationService from '../services/notification-service.js';
+import { renameUploadedFile } from '../config/upload.js';
 
 export const createForm = async (req: AuthRequest, res: Response) => {
   try {
@@ -29,11 +30,40 @@ export const createForm = async (req: AuthRequest, res: Response) => {
       work_category,
       project_description,
       technical_impact,
-      supporting_documents,
+      supporting_documents: [], // Will be updated after renaming files
       pr_number,
       budget_estimate,
       purchasing_status,
     });
+
+    // Rename uploaded files with document number
+    const renamedDocuments = [];
+    if (supporting_documents && Array.isArray(supporting_documents)) {
+      for (const doc of supporting_documents) {
+        try {
+          const newFilename = renameUploadedFile(
+            doc.filename,
+            form.document_no,
+            doc.originalName.replace(/\.[^/.]+$/, '') // Remove extension from original name
+          );
+          
+          renamedDocuments.push({
+            filename: newFilename,
+            originalName: doc.originalName,
+            path: doc.path.replace(doc.filename, newFilename),
+            size: doc.size,
+            mimetype: doc.mimetype,
+          });
+        } catch (error) {
+          console.error('Error renaming file:', error);
+          // Keep original filename if rename fails
+          renamedDocuments.push(doc);
+        }
+      }
+    }
+
+    // Update form with renamed documents
+    await formService.updateFormDocuments(form.id, renamedDocuments);
 
     // Notify HODs at the same plant
     await notificationService.notifyApprovers(
@@ -43,7 +73,7 @@ export const createForm = async (req: AuthRequest, res: Response) => {
       form.id
     );
 
-    res.json({ success: true, id: form.id });
+    res.json({ success: true, id: form.id, document_no: form.document_no });
   } catch (error: any) {
     console.error('Create form error:', error);
     res.status(500).json({ error: error.message });
