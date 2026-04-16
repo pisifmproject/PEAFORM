@@ -282,13 +282,26 @@ export default function RequestDetail() {
                   <h2 className="text-xl font-bold text-slate-900">IV. Supporting Documents</h2>
                 </div>
                 <div className="space-y-2">
-                  {form.supporting_documents.length > 0 ? form.supporting_documents.map((doc: string) => (
-                    <div key={doc} className="flex items-center gap-3 p-3 bg-white border border-slate-100 rounded-xl shadow-sm">
-                      <div className="h-2 w-2 rounded-full bg-emerald-500" />
-                      <span className="text-sm font-medium text-slate-700">{doc}</span>
+                  {form.supporting_documents && form.supporting_documents.length > 0 ? form.supporting_documents.map((doc: any, index: number) => (
+                    <div key={index} className="flex items-center justify-between gap-3 p-3 bg-white border border-slate-100 rounded-xl shadow-sm hover:border-blue-200 hover:bg-blue-50/30 transition-all group">
+                      <div className="flex items-center gap-3 flex-1 min-w-0">
+                        <FileText className="h-5 w-5 text-blue-500 flex-shrink-0" />
+                        <div className="flex-1 min-w-0">
+                          <p className="text-sm font-medium text-slate-900 truncate">{doc.originalName}</p>
+                          <p className="text-xs text-slate-500">{(doc.size / 1024).toFixed(2)} KB</p>
+                        </div>
+                      </div>
+                      <a
+                        href={`/api/forms/download/${doc.filename}`}
+                        target="_blank"
+                        rel="noopener noreferrer"
+                        className="flex-shrink-0 px-3 py-1.5 text-xs font-bold text-blue-600 hover:text-blue-700 hover:bg-blue-50 rounded-lg transition-all opacity-0 group-hover:opacity-100"
+                      >
+                        Download
+                      </a>
                     </div>
                   )) : (
-                    <p className="text-sm text-slate-400 italic">No supporting documents selected.</p>
+                    <p className="text-sm text-slate-400 italic">No supporting documents uploaded.</p>
                   )}
                 </div>
               </motion.section>

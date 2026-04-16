@@ -1,6 +1,7 @@
 import React, { useState } from 'react';
 import { useNavigate } from 'react-router-dom';
 import Layout from '../components/Layout';
+import FileUpload from '../components/FileUpload';
 import { useAuth } from '../context/AuthContext';
 import { motion, AnimatePresence } from 'motion/react';
 import { 
@@ -13,7 +14,6 @@ import {
   CheckCircle2, 
   AlertCircle,
   ChevronRight,
-  Upload,
   Info
 } from 'lucide-react';
 
@@ -45,19 +45,6 @@ const TECHNICAL_IMPACTS = [
   'Safety Risk - New hazards introduced (mechanical, electrical, chemical, etc.)'
 ];
 
-const SUPPORTING_DOCUMENTS = [
-  'Technical Drawings (Layout / P&ID / Single Line Diagram)',
-  'Equipment Datasheet / Specification',
-  'Vendor Quotation (Minimum 2-3 suppliers if applicable)',
-  'Technical Comparison Sheet (for vendor selection)',
-  'Job Safety Analysis (JSA) / Risk Assessment',
-  'Project Timeline (Schedule / Gantt Chart)',
-  'Load Calculation (Electrical / Utility, if applicable)',
-  'Cost Breakdown (CAPEX / OPEX estimation)',
-  'Method Statement / Installation Procedure',
-  'Layout Marking / Area Impact Sketch'
-];
-
 export default function CreateRequest() {
   const { user } = useAuth();
   const navigate = useNavigate();
@@ -72,7 +59,7 @@ export default function CreateRequest() {
     work_category: [] as string[],
     project_description: '',
     technical_impact: [] as string[],
-    supporting_documents: [] as string[],
+    supporting_documents: [] as any[],
     pr_number: '',
     budget_estimate: '',
     purchasing_status: ''
@@ -322,46 +309,11 @@ export default function CreateRequest() {
               <h2 className="font-bold text-slate-800">IV. REQUIRED SUPPORTING DOCUMENTS</h2>
             </div>
             <div className="p-6">
-              <p className="text-sm text-slate-500 italic mb-4">All documents must be attached :</p>
-              <div className="grid grid-cols-1 gap-4">
-                {SUPPORTING_DOCUMENTS.map((doc) => {
-                  const isChecked = formData.supporting_documents.includes(doc);
-                  return (
-                    <div key={doc} className={`p-4 rounded-2xl border transition-all ${isChecked ? 'border-amber-200 bg-amber-50/30' : 'border-slate-100 bg-white'}`}>
-                      <label className="flex items-center gap-3 cursor-pointer group">
-                        <input
-                          type="checkbox"
-                          checked={isChecked}
-                          onChange={() => handleCheckboxChange('supporting_documents', doc)}
-                          className="h-5 w-5 rounded-md border-slate-300 text-amber-600 focus:ring-amber-500 transition-all"
-                        />
-                        <span className="text-sm font-medium text-slate-700 group-hover:text-slate-900 transition-colors">{doc}</span>
-                      </label>
-                      <AnimatePresence>
-                        {isChecked && (
-                          <motion.div 
-                            initial={{ height: 0, opacity: 0 }}
-                            animate={{ height: 'auto', opacity: 1 }}
-                            exit={{ height: 0, opacity: 0 }}
-                            className="overflow-hidden"
-                          >
-                            <div className="mt-4 pl-8">
-                              <button
-                                type="button"
-                                className="inline-flex items-center gap-2 px-4 py-2 border border-amber-200 shadow-sm text-xs font-bold rounded-xl text-amber-700 bg-white hover:bg-amber-50 transition-all active:scale-95"
-                                onClick={() => alert(`Upload dialog for: ${doc}`)}
-                              >
-                                <Upload className="h-4 w-4" />
-                                Upload Document
-                              </button>
-                            </div>
-                          </motion.div>
-                        )}
-                      </AnimatePresence>
-                    </div>
-                  );
-                })}
-              </div>
+              <p className="text-sm text-slate-500 italic mb-4">Upload all required supporting documents (PDF, Word, Excel, Images, ZIP)</p>
+              <FileUpload
+                onFilesUploaded={(files) => setFormData({ ...formData, supporting_documents: files })}
+                existingFiles={formData.supporting_documents}
+              />
             </div>
           </motion.section>
 
