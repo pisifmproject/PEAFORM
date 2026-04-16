@@ -46,19 +46,58 @@ export const createForm = async (data: {
 
 export const getFormsByUser = async (user_id: string, role: string, plant?: string) => {
   if (role === 'user') {
+    // User hanya melihat request mereka sendiri
     return await db
       .select()
       .from(peaf_forms)
       .where(eq(peaf_forms.applicant_id, user_id))
       .orderBy(desc(peaf_forms.created_at));
-  } else if (['hod', 'hse', 'factory_manager'].includes(role) && plant) {
+  } else if (role === 'hod' && plant) {
+    // HOD hanya melihat request dari plant mereka dengan status pending_hod
     return await db
       .select()
       .from(peaf_forms)
-      .where(eq(peaf_forms.plant_location, plant))
+      .where(
+        and(
+          eq(peaf_forms.plant_location, plant),
+          eq(peaf_forms.status, 'pending_hod')
+        )
+      )
+      .orderBy(desc(peaf_forms.created_at));
+  } else if (role === 'hse' && plant) {
+    // HSE hanya melihat request dari plant mereka dengan status pending_hse
+    return await db
+      .select()
+      .from(peaf_forms)
+      .where(
+        and(
+          eq(peaf_forms.plant_location, plant),
+          eq(peaf_forms.status, 'pending_hse')
+        )
+      )
+      .orderBy(desc(peaf_forms.created_at));
+  } else if (role === 'factory_manager' && plant) {
+    // Factory Manager hanya melihat request dari plant mereka dengan status pending_factory_manager
+    return await db
+      .select()
+      .from(peaf_forms)
+      .where(
+        and(
+          eq(peaf_forms.plant_location, plant),
+          eq(peaf_forms.status, 'pending_factory_manager')
+        )
+      )
+      .orderBy(desc(peaf_forms.created_at));
+  } else if (role === 'engineering_manager') {
+    // Engineering Manager hanya melihat request dengan status pending_engineering_manager
+    return await db
+      .select()
+      .from(peaf_forms)
+      .where(eq(peaf_forms.status, 'pending_engineering_manager'))
       .orderBy(desc(peaf_forms.created_at));
   }
 
+  // Admin melihat semua request
   return await db.select().from(peaf_forms).orderBy(desc(peaf_forms.created_at));
 };
 
