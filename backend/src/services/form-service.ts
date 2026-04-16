@@ -1,4 +1,4 @@
-import { eq, desc, and } from 'drizzle-orm';
+import { eq, desc, and, gte, lt, sql } from 'drizzle-orm';
 import { db } from '../db/index.js';
 import { peaf_forms, peaf_approvals, users } from '../db/schema.js';
 import { toRoman } from '../config/roman-numerals.js';
@@ -24,10 +24,18 @@ export const createForm = async (data: {
   const roman_month = toRoman(month);
 
   // Find next sequence number for this year
+  const year_start = new Date(year, 0, 1); // January 1st of current year
+  const year_end = new Date(year + 1, 0, 1); // January 1st of next year
+  
   const forms_this_year = await db
     .select()
     .from(peaf_forms)
-    .where(eq(peaf_forms.created_at, new Date(year, 0, 1)));
+    .where(
+      and(
+        gte(peaf_forms.created_at, year_start),
+        lt(peaf_forms.created_at, year_end)
+      )
+    );
 
   const next_seq = (forms_this_year.length + 1).toString().padStart(3, '0');
   const document_no = `${next_seq}/PEAF/IFM/MFG-PE/${roman_month}/${year}`;
