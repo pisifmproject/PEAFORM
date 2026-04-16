@@ -65,21 +65,27 @@ PEAFORM menggunakan sistem approval bertingkat dengan validasi ketat untuk memas
 
 ## Access Control Rules
 
-### Dashboard Visibility (Status-Based Filtering)
+### Dashboard Visibility (Status-Based Filtering + Approved Requests)
 | Role | Dashboard Shows |
 |------|-----------------|
-| **User** | Hanya request yang mereka buat sendiri (semua status) |
-| **HOD** | Hanya request dari plant mereka dengan status `pending_hod` |
-| **HSE** | Hanya request dari plant mereka dengan status `pending_hse` |
-| **Factory Manager** | Hanya request dari plant mereka dengan status `pending_factory_manager` |
-| **Engineering Manager** | Hanya request dengan status `pending_engineering_manager` |
+| **User** | Semua request yang mereka buat sendiri (semua status) |
+| **HOD** | Request dari plant mereka: `pending_hod` (untuk approve) + `approved` (untuk info) |
+| **HSE** | Request dari plant mereka: `pending_hse` (untuk approve) + `approved` (untuk info) |
+| **Factory Manager** | Request dari plant mereka: `pending_factory_manager` (untuk approve) + `approved` (untuk info) |
+| **Engineering Manager** | Request: `pending_engineering_manager` (untuk approve) + `approved` (untuk info) |
 | **Admin** | Semua request dari semua plant dan semua status |
 
 **Contoh:**
-- Request dengan status `pending_hod` → **HANYA muncul di dashboard HOD**
-- Request dengan status `pending_hse` → **HANYA muncul di dashboard HSE** (tidak muncul di HOD lagi)
-- Request dengan status `pending_factory_manager` → **HANYA muncul di dashboard Factory Manager**
-- Request dengan status `pending_engineering_manager` → **HANYA muncul di dashboard Engineering Manager**
+- Request dengan status `pending_hod` → Muncul di dashboard **HOD**
+- Request dengan status `pending_hse` → Muncul di dashboard **HSE**
+- Request dengan status `pending_factory_manager` → Muncul di dashboard **Factory Manager**
+- Request dengan status `pending_engineering_manager` → Muncul di dashboard **Engineering Manager**
+- Request dengan status `approved` → Muncul di dashboard **semua approver di plant yang sama + Engineering Manager**
+
+**Kenapa approved request muncul di semua approver?**
+- Agar semua atasan bisa melihat request yang sudah fully approved
+- Untuk transparansi dan tracking
+- Sebagai referensi untuk request serupa di masa depan
 
 ### Plant-Based Access
 | Role | Access Rule |
@@ -190,12 +196,18 @@ Any Stage → [Rejected] → rejected (END)
 - ✅ **Engineering Manager** sekarang melihat request di dashboard
 
 **5. Engineering Manager Approve (Status berubah: `approved`)**
-- ❌ **Engineering Manager** tidak melihat lagi (status sudah `approved`)
+- ❌ Request tidak hilang dari dashboard Engineering Manager (tetap muncul sebagai info)
+- ✅ Request **muncul kembali** di dashboard:
+  - HOD Plant Cikupa (sebagai info)
+  - HSE Plant Cikupa (sebagai info)
+  - Factory Manager Plant Cikupa (sebagai info)
 - 📢 **BROADCAST**: Notifikasi dikirim ke:
   - HOD Plant Cikupa
   - HSE Plant Cikupa
   - Factory Manager Plant Cikupa
   - User Satu (applicant)
+
+**Catatan:** Request dengan status `approved` tetap muncul di dashboard semua approver untuk transparansi dan referensi.
 
 ---
 
@@ -302,13 +314,14 @@ const checkCanApprove = () => {
 
 ## Summary
 
-✅ **Status-Based Dashboard**: Request hanya muncul di dashboard approver yang sesuai dengan status  
+✅ **Status-Based Dashboard**: Request muncul di dashboard approver sesuai status untuk approval  
+✅ **Approved Visibility**: Request yang sudah approved tetap muncul di semua approver untuk transparansi  
 ✅ **Plant Isolation**: Setiap plant hanya melihat request mereka sendiri  
 ✅ **Sequential Approval**: Atasan berikutnya tidak bisa approve sebelum atasan sebelumnya  
 ✅ **No Duplicate Approval**: User tidak bisa approve 2x untuk request yang sama  
 ✅ **Final Broadcast**: Ketika Engineering Manager approve, semua approver di plant tersebut mendapat notifikasi  
 ✅ **Role-Based Access**: Setiap role hanya bisa approve di stage yang sesuai  
-✅ **Clean Dashboard**: Request yang sudah di-approve tidak muncul lagi di dashboard approver sebelumnya  
+✅ **Transparency**: Semua approver bisa melihat request yang sudah fully approved  
 
 ---
 
