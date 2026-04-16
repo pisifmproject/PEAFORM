@@ -1,7 +1,6 @@
 import React, { useState } from 'react';
 import { useNavigate } from 'react-router-dom';
 import Layout from '../components/Layout';
-import FileUpload from '../components/FileUpload';
 import { useAuth } from '../context/AuthContext';
 import { motion, AnimatePresence } from 'motion/react';
 import { 
@@ -14,7 +13,9 @@ import {
   CheckCircle2, 
   AlertCircle,
   ChevronRight,
-  Info
+  Info,
+  Upload,
+  X
 } from 'lucide-react';
 
 const WORK_CATEGORIES = [
@@ -45,6 +46,19 @@ const TECHNICAL_IMPACTS = [
   'Safety Risk - New hazards introduced (mechanical, electrical, chemical, etc.)'
 ];
 
+const SUPPORTING_DOCUMENTS = [
+  'Technical Drawings (Layout / P&ID / Single Line Diagram)',
+  'Equipment Datasheet / Specification',
+  'Vendor Quotation (Minimum 2-3 suppliers if applicable)',
+  'Technical Comparison Sheet (for vendor selection)',
+  'Job Safety Analysis (JSA) / Risk Assessment',
+  'Project Timeline (Schedule / Gantt Chart)',
+  'Load Calculation (Electrical / Utility, if applicable)',
+  'Cost Breakdown (CAPEX / OPEX estimation)',
+  'Method Statement / Installation Procedure',
+  'Layout Marking / Area Impact Sketch'
+];
+
 export default function CreateRequest() {
   const { user } = useAuth();
   const navigate = useNavigate();
@@ -59,15 +73,18 @@ export default function CreateRequest() {
     work_category: [] as string[],
     project_description: '',
     technical_impact: [] as string[],
-    supporting_documents: [] as any[],
+    supporting_documents: {} as Record<string, any[]>, // Changed to object with document type as key
     pr_number: '',
     budget_estimate: '',
     purchasing_status: ''
   });
 
-  const [showConfirmModal, setShowConfirmModal] = useState(false);
+  const [uploadingDoc, setUploadingDoc] = useState<string | null>(null);
 
-  const handleCheckboxChange = (field: 'work_category' | 'technical_impact' | 'supporting_documents', value: string) => {
+  const [showConfirmModal, setShowConfirmModal] = useState(false);
+  const [selectedDocTypes, setSelectedDocTypes] = useState<string[]>([]);
+
+  const handleCheckboxChange = (field: 'work_category' | 'technical_impact', value: string) => {
     setFormData(prev => {
       const current = prev[field];
       if (current.includes(value)) {
@@ -76,6 +93,77 @@ export default function CreateRequest() {
         return { ...prev, [field]: [...current, value] };
       }
     });
+  };
+
+  const handleDocTypeToggle = (docType: string) => {
+    if (selectedDocTypes.includes(docType)) {
+      // Remove doc type and its files
+      setSelectedDocTypes(prev => prev.filter(d => d !== docType));
+      const newDocs = { ...formData.supporting_documents };
+      delete newDocs[docType];
+      setFormData({ ...formData, supporting_documents: newDocs });
+    } else {
+      // Add doc type
+      setSelectedDocTypes(prev => [...prev, docType]);
+    }
+  };
+
+  const handleFileUpload = async (docType: string, files: FileList | null) => {
+    if (!files || files.length === 0) return;
+
+    setUploadingDoc(docType);
+    setError('');
+
+    try {
+      const fileArray = Array.from(files);
+      
+      // Validate file sizes
+      for (const file of fileArray) {
+        if (file.size > 10 * 1024 * 1024) {
+          throw new Error(`File ${file.name} exceeds 10MB limit`);
+        }
+      }
+
+      // Upload files
+      const formData = new FormData();
+      fileArray.forEach(file => formData.append('files', file));
+
+      const res = await fetch('/api/forms/upload', {
+        method: 'POST',
+        credentials: 'include',
+        body: formData
+      });
+
+      if (!res.ok) {
+        const data = await res.json();
+        throw new Error(data.error || 'Upload failed');
+      }
+
+      const result = await res.json();
+      
+      // Add uploaded files to the document type
+      setFormData(prev => ({
+        ...prev,
+        supporting_documents: {
+          ...prev.supporting_documents,
+          [docType]: [...(prev.supporting_documents[docType] || []), ...result.files]
+        }
+      }));
+    } catch (err: any) {
+      setError(err.message);
+    } finally {
+      setUploadingDoc(null);
+    }
+  };
+
+  const removeFile = (docType: string, fileIndex: number) => {
+    setFormData(prev => ({
+      ...prev,
+      supporting_documents: {
+        ...prev.supporting_documents,
+        [docType]: prev.supporting_documents[docType].filter((_, i) => i !== fileIndex)
+      }
+    }));
   };
 
   const formatCurrency = (value: string) => {
@@ -102,9 +190,13 @@ export default function CreateRequest() {
     setLoading(true);
     setError('');
 
+    // Flatten supporting_documents from object to array
+    const allFiles = Object.values(formData.supporting_documents).flat();
+
     // Prepend Rp. before sending to server
     const submitData = {
       ...formData,
+      supporting_documents: allFiles,
       budget_estimate: formData.budget_estimate ? `Rp ${formData.budget_estimate}` : ''
     };
 
@@ -112,7 +204,8 @@ export default function CreateRequest() {
       const res = await fetch('/api/forms', {
         method: 'POST',
         headers: { 'Content-Type': 'application/json' },
-        body: JSON.stringify(submitData)
+        body: JSON.stringify(submitData),
+        credentials: 'include'
       });
 
       if (!res.ok) {
@@ -309,11 +402,98 @@ export default function CreateRequest() {
               <h2 className="font-bold text-slate-800">IV. REQUIRED SUPPORTING DOCUMENTS</h2>
             </div>
             <div className="p-6">
-              <p className="text-sm text-slate-500 italic mb-4">Upload all required supporting documents (PDF, Word, Excel, Images, ZIP)</p>
-              <FileUpload
-                onFilesUploaded={(files) => setFormData({ ...formData, supporting_documents: files })}
-                existingFiles={formData.supporting_documents}
-              />
+              <p className="text-sm text-slate-500 italic mb-4">All documents must be attached :</p>
+              <div className="grid grid-cols-1 gap-4">
+                {SUPPORTING_DOCUMENTS.map((doc) => {
+                  const isChecked = selectedDocTypes.includes(doc);
+                  const files = formData.supporting_documents[doc] || [];
+                  const isUploading = uploadingDoc === doc;
+                  
+                  return (
+                    <div key={doc} className={`p-4 rounded-2xl border transition-all ${isChecked ? 'border-amber-200 bg-amber-50/30' : 'border-slate-100 bg-white'}`}>
+                      <label className="flex items-center gap-3 cursor-pointer group">
+                        <input
+                          type="checkbox"
+                          checked={isChecked}
+                          onChange={() => handleDocTypeToggle(doc)}
+                          className="h-5 w-5 rounded-md border-slate-300 text-amber-600 focus:ring-amber-500 transition-all"
+                        />
+                        <span className="text-sm font-medium text-slate-700 group-hover:text-slate-900 transition-colors">{doc}</span>
+                      </label>
+                      
+                      <AnimatePresence>
+                        {isChecked && (
+                          <motion.div 
+                            initial={{ height: 0, opacity: 0 }}
+                            animate={{ height: 'auto', opacity: 1 }}
+                            exit={{ height: 0, opacity: 0 }}
+                            className="overflow-hidden"
+                          >
+                            <div className="mt-4 pl-8 space-y-3">
+                              {/* Upload Button */}
+                              <div>
+                                <input
+                                  type="file"
+                                  id={`file-${doc}`}
+                                  multiple
+                                  accept=".pdf,.doc,.docx,.xls,.xlsx,.jpg,.jpeg,.png,.zip"
+                                  onChange={(e) => handleFileUpload(doc, e.target.files)}
+                                  className="hidden"
+                                />
+                                <label
+                                  htmlFor={`file-${doc}`}
+                                  className={`inline-flex items-center gap-2 px-4 py-2 border border-amber-200 shadow-sm text-xs font-bold rounded-xl transition-all active:scale-95 cursor-pointer ${
+                                    isUploading 
+                                      ? 'bg-amber-100 text-amber-600 cursor-wait' 
+                                      : 'text-amber-700 bg-white hover:bg-amber-50'
+                                  }`}
+                                >
+                                  {isUploading ? (
+                                    <>
+                                      <div className="h-4 w-4 border-2 border-amber-600/30 border-t-amber-600 rounded-full animate-spin" />
+                                      Uploading...
+                                    </>
+                                  ) : (
+                                    <>
+                                      <Upload className="h-4 w-4" />
+                                      Upload Document
+                                    </>
+                                  )}
+                                </label>
+                                <p className="text-xs text-slate-400 mt-1">PDF, Word, Excel, Images, ZIP • Max 10MB</p>
+                              </div>
+
+                              {/* Uploaded Files List */}
+                              {files.length > 0 && (
+                                <div className="space-y-2">
+                                  {files.map((file: any, index: number) => (
+                                    <div key={index} className="flex items-center justify-between gap-3 p-2 bg-white border border-amber-100 rounded-lg group hover:border-amber-200">
+                                      <div className="flex items-center gap-2 flex-1 min-w-0">
+                                        <FileText className="h-4 w-4 text-amber-600 flex-shrink-0" />
+                                        <div className="flex-1 min-w-0">
+                                          <p className="text-xs font-medium text-slate-900 truncate">{file.originalName}</p>
+                                          <p className="text-xs text-slate-500">{(file.size / 1024).toFixed(2)} KB</p>
+                                        </div>
+                                      </div>
+                                      <button
+                                        type="button"
+                                        onClick={() => removeFile(doc, index)}
+                                        className="flex-shrink-0 p-1 text-slate-400 hover:text-red-600 hover:bg-red-50 rounded transition-all opacity-0 group-hover:opacity-100"
+                                      >
+                                        <X className="h-4 w-4" />
+                                      </button>
+                                    </div>
+                                  ))}
+                                </div>
+                              )}
+                            </div>
+                          </motion.div>
+                        )}
+                      </AnimatePresence>
+                    </div>
+                  );
+                })}
+              </div>
             </div>
           </motion.section>
 
