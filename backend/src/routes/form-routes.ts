@@ -1,5 +1,6 @@
 import { Router } from 'express';
 import * as formController from '../controllers/form-controller.js';
+import * as pdfController from '../controllers/pdf-controller.js';
 import { authenticate } from '../middleware/authenticate.js';
 import { upload, getFilePath } from '../config/upload.js';
 
@@ -47,6 +48,7 @@ router.get('/download/:filename', authenticate, (req, res) => {
 router.post('/', authenticate, formController.createForm);
 router.get('/', authenticate, formController.getForms);
 router.get('/:id', authenticate, formController.getFormById);
+router.get('/:id/pdf', authenticate, pdfController.downloadFormPDF);
 router.post('/:id/approve', authenticate, formController.approveForm);
 
 export default router;

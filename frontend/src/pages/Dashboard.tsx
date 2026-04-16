@@ -16,7 +16,8 @@ import {
   ChevronRight,
   BarChart3,
   AlertCircle,
-  MapPin
+  MapPin,
+  Download
 } from 'lucide-react';
 
 export default function Dashboard() {
@@ -336,13 +337,24 @@ export default function Dashboard() {
                         {getStatusBadge(form.status)}
                       </td>
                       <td className="px-6 py-4 text-right">
-                        <Link 
-                          to={`/request/${form.id}`}
-                          className="inline-flex items-center gap-1 text-sm font-bold text-blue-600 hover:text-blue-800 transition-colors"
-                        >
-                          View Details
-                          <ChevronRight className="w-4 h-4 group-hover:translate-x-0.5 transition-transform" />
-                        </Link>
+                        <div className="flex items-center justify-end gap-2">
+                          {form.status === 'approved' && (
+                            <button
+                              onClick={() => window.open(`/api/forms/${form.id}/pdf`, '_blank')}
+                              className="inline-flex items-center gap-1 px-3 py-1.5 text-xs font-bold text-emerald-600 hover:text-emerald-700 hover:bg-emerald-50 rounded-lg transition-all"
+                            >
+                              <Download className="w-3.5 h-3.5" />
+                              PDF
+                            </button>
+                          )}
+                          <Link 
+                            to={`/request/${form.id}`}
+                            className="inline-flex items-center gap-1 text-sm font-bold text-blue-600 hover:text-blue-800 transition-colors"
+                          >
+                            View Details
+                            <ChevronRight className="w-4 h-4 group-hover:translate-x-0.5 transition-transform" />
+                          </Link>
+                        </div>
                       </td>
                     </motion.tr>
                   ))}
