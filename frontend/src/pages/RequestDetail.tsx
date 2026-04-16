@@ -286,27 +286,51 @@ export default function RequestDetail() {
                   </div>
                   <h2 className="text-xl font-bold text-slate-900">IV. Supporting Documents</h2>
                 </div>
-                <div className="space-y-2">
-                  {form.supporting_documents && form.supporting_documents.filter((d: any) => !d.isMenu).length > 0 ? form.supporting_documents.filter((d: any) => !d.isMenu).map((doc: any, index: number) => (
-                    <div key={index} className="flex items-center justify-between gap-3 p-3 bg-white border border-slate-100 rounded-xl shadow-sm hover:border-blue-200 hover:bg-blue-50/30 transition-all group">
-                      <div className="flex items-center gap-3 flex-1 min-w-0">
-                        <FileText className="h-5 w-5 text-blue-500 flex-shrink-0" />
-                        <div className="flex-1 min-w-0">
-                          <p className="text-sm font-medium text-slate-900 truncate">{doc.originalName}</p>
-                          <p className="text-xs text-slate-500">{(doc.size / 1024).toFixed(2)} KB</p>
+                <div className="space-y-4">
+                  {/* Document Types Selected */}
+                  {form.supporting_documents && form.supporting_documents.filter((d: any) => d.isMenu).length > 0 && (
+                    <div className="space-y-2">
+                      <h3 className="text-xs font-bold text-slate-400 uppercase tracking-wider mb-3">Document Types Required</h3>
+                      {form.supporting_documents.filter((d: any) => d.isMenu).map((doc: any, index: number) => (
+                        <div key={index} className="flex items-center gap-3 p-3 bg-white border border-slate-100 rounded-xl shadow-sm">
+                          <div className="flex items-center justify-center w-5 h-5 rounded bg-emerald-50 border border-emerald-200">
+                            <CheckCircle2 className="w-3.5 h-3.5 text-emerald-600" />
+                          </div>
+                          <span className="text-sm font-medium text-slate-700">{doc.type}</span>
                         </div>
-                      </div>
-                      <button
-                        type="button"
-                        onClick={() => handleDownloadFile(doc.filename)}
-                        className="flex-shrink-0 px-3 py-1.5 text-xs font-bold text-emerald-600 hover:text-emerald-700 hover:bg-emerald-50 rounded-lg transition-all flex items-center gap-1 opacity-0 group-hover:opacity-100"
-                      >
-                        <Download className="h-3 w-3" />
-                        Download
-                      </button>
+                      ))}
                     </div>
-                  )) : (
-                    <p className="text-sm text-slate-400 italic">No supporting documents uploaded.</p>
+                  )}
+                  
+                  {/* Uploaded Files */}
+                  {form.supporting_documents && form.supporting_documents.filter((d: any) => !d.isMenu).length > 0 && (
+                    <div className="space-y-2">
+                      <h3 className="text-xs font-bold text-slate-400 uppercase tracking-wider mb-3">Uploaded Files</h3>
+                      {form.supporting_documents.filter((d: any) => !d.isMenu).map((doc: any, index: number) => (
+                        <div key={index} className="flex items-center justify-between gap-3 p-3 bg-white border border-slate-100 rounded-xl shadow-sm hover:border-blue-200 hover:bg-blue-50/30 transition-all group">
+                          <div className="flex items-center gap-3 flex-1 min-w-0">
+                            <FileText className="h-5 w-5 text-blue-500 flex-shrink-0" />
+                            <div className="flex-1 min-w-0">
+                              <p className="text-sm font-medium text-slate-900 truncate">{doc.originalName}</p>
+                              <p className="text-xs text-slate-500">{(doc.size / 1024).toFixed(2)} KB</p>
+                            </div>
+                          </div>
+                          <button
+                            type="button"
+                            onClick={() => handleDownloadFile(doc.filename)}
+                            className="flex-shrink-0 px-3 py-1.5 text-xs font-bold text-emerald-600 hover:text-emerald-700 hover:bg-emerald-50 rounded-lg transition-all flex items-center gap-1 opacity-0 group-hover:opacity-100"
+                          >
+                            <Download className="h-3 w-3" />
+                            Download
+                          </button>
+                        </div>
+                      ))}
+                    </div>
+                  )}
+                  
+                  {/* No documents */}
+                  {(!form.supporting_documents || (form.supporting_documents.filter((d: any) => d.isMenu).length === 0 && form.supporting_documents.filter((d: any) => !d.isMenu).length === 0)) && (
+                    <p className="text-sm text-slate-400 italic">No supporting documents selected or uploaded.</p>
                   )}
                 </div>
               </motion.section>

@@ -204,13 +204,31 @@ export const downloadFormPDF = async (req: AuthRequest, res: Response) => {
     const halfWidth = (contentWidth - 20) / 2;
     const impactHeight = doc.heightOfString(impactText, { width: halfWidth - 10, lineGap: 2 });
 
+    // Supporting Documents - prepare checkbox list and uploaded files
     const supportingDocs = form.supporting_documents as any[];
     const menus = supportingDocs ? supportingDocs.filter(d => d.isMenu) : [];
-    const docsText = menus.length > 0
-      ? menus.map((d: any, i: number) => `${i + 1}. ${d.type}`).join('\n')
-      : 'No supporting documents selected.';
+    const uploadedFiles = supportingDocs ? supportingDocs.filter(d => !d.isMenu) : [];
     
-    const docsHeight = doc.heightOfString(docsText, { width: halfWidth - 10, lineGap: 2 });
+    // Build checkbox text with ONLY checked items using bullet points
+    let docsCheckboxText = '';
+    if (menus.length > 0) {
+      menus.forEach((menu: any) => {
+        // Use bullet point instead of checkbox to avoid encoding issues
+        docsCheckboxText += `• ${menu.type}\n`;
+      });
+    } else {
+      docsCheckboxText = 'No document types selected.\n';
+    }
+    
+    // Add uploaded files section
+    if (uploadedFiles.length > 0) {
+      docsCheckboxText += '\nUploaded Files:\n';
+      uploadedFiles.forEach((file: any, i: number) => {
+        docsCheckboxText += `${i + 1}. ${file.originalName || file.filename}\n`;
+      });
+    }
+    
+    const docsHeight = doc.heightOfString(docsCheckboxText, { width: halfWidth - 10, lineGap: 2 });
 
     const maxHeight = Math.max(impactHeight, docsHeight) + 16;
     
@@ -237,12 +255,12 @@ export const downloadFormPDF = async (req: AuthRequest, res: Response) => {
          lineGap: 2 
        });
 
-    // Draw right box (Supporting Documents)
+    // Draw right box (Supporting Documents with checkboxes)
     doc.rect(margin + 10 + halfWidth, currentY, halfWidth, maxHeight).stroke();
     doc.fontSize(8)
        .font('Helvetica')
        .fillColor('#000000')
-       .text(docsText, margin + 15 + halfWidth, currentY + 8, { 
+       .text(docsCheckboxText, margin + 15 + halfWidth, currentY + 8, { 
          width: halfWidth - 10, 
          lineGap: 2 
        });

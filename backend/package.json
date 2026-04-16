@@ -9,7 +9,10 @@
     "db:generate": "drizzle-kit generate",
     "db:migrate": "tsx src/db/migrate.ts",
     "db:push": "drizzle-kit push",
-    "db:studio": "drizzle-kit studio"
+    "db:studio": "drizzle-kit studio",
+    "clear-requests": "tsx src/scripts/clear-requests.ts",
+    "clean-orphan-files": "tsx src/scripts/clean-orphan-files.ts",
+    "clear-docpeaform": "tsx src/scripts/clear-docpeaform-folder.ts"
   },
   "dependencies": {
     "@types/pdfkit": "^0.17.5",

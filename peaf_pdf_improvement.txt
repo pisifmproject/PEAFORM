@@ -37,8 +37,18 @@ F. TECHNICAL IMPACT & SUPPORTING DOCUMENTS - Remove substring + “…” -
 Render full text with wrapping - Use two-column layout - Height =
 max(left, right) + padding
 
-G. SUPPORTING DOCUMENTS - Show full filename - Use numbered list - No
-truncation
+G. SUPPORTING DOCUMENTS 
+- Show bullet point (•) for selected document types (instead of checkbox to avoid encoding issues)
+- Display which documents were selected/submitted
+- Below bullets, show uploaded files with:
+  * File number
+  * Original filename
+  * File size in KB (removed to keep it clean)
+- Use numbered list for uploaded files
+- No truncation
+- In web view: Show two sections:
+  1. Document Types Required (with checkmarks)
+  2. Uploaded Files (with download buttons)
 
 H. APPLICANT INFO - Replace manual Y positioning with drawField() -
 Stack fields vertically
