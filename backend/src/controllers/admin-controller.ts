@@ -111,3 +111,46 @@ export const rejectPendingRegistration = async (req: AuthRequest, res: Response)
     res.status(500).json({ error: error.message });
   }
 };
+
+export const updateUserDepartment = async (req: AuthRequest, res: Response) => {
+  if (req.user?.role !== 'admin') return res.status(403).json({ error: 'Forbidden' });
+  try {
+    await userService.updateUserDepartment(req.params.id, req.body.department);
+    res.json({ success: true });
+  } catch (error: any) {
+    console.error('Update update user department error:', error);
+    res.status(500).json({ error: error.message });
+  }
+};
+
+export const getDepartments = async (req: AuthRequest, res: Response) => {
+  try {
+    const depts = await userService.getAllDepartments();
+    res.json(depts);
+  } catch (error: any) {
+    console.error('Get departments error:', error);
+    res.status(500).json({ error: error.message });
+  }
+};
+
+export const createDepartment = async (req: AuthRequest, res: Response) => {
+  if (req.user?.role !== 'admin') return res.status(403).json({ error: 'Forbidden' });
+  try {
+    const dept = await userService.createDepartment(req.body.name);
+    res.json({ success: true, department: dept });
+  } catch (error: any) {
+    console.error('Create department error:', error);
+    res.status(500).json({ error: error.message });
+  }
+};
+
+export const deleteDepartment = async (req: AuthRequest, res: Response) => {
+  if (req.user?.role !== 'admin') return res.status(403).json({ error: 'Forbidden' });
+  try {
+    await userService.deleteDepartment(req.params.id);
+    res.json({ success: true });
+  } catch (error: any) {
+    console.error('Delete department error:', error);
+    res.status(500).json({ error: error.message });
+  }
+};

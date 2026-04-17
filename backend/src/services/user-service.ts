@@ -1,6 +1,6 @@
 import { eq, or } from 'drizzle-orm';
 import { db } from '../db/index.js';
-import { users, pending_registrations, notifications } from '../db/schema.js';
+import { users, pending_registrations, notifications, departments } from '../db/schema.js';
 import bcrypt from 'bcryptjs';
 
 export const createUser = async (data: {
@@ -176,4 +176,31 @@ export const notifyAdminsOfNewRegistration = async (userName: string) => {
   );
 
   await Promise.all(notificationPromises);
+};
+
+export const updateUserDepartment = async (id: string, department: string) => {
+  const [user] = await db
+    .update(users)
+    .set({ department, updated_at: new Date() })
+    .where(eq(users.id, id))
+    .returning();
+  
+  return user;
+};
+
+export const getAllDepartments = async () => {
+  return await db.select().from(departments);
+};
+
+export const createDepartment = async (name: string) => {
+  const [dept] = await db
+    .insert(departments)
+    .values({ name })
+    .returning();
+  
+  return dept;
+};
+
+export const deleteDepartment = async (id: string) => {
+  await db.delete(departments).where(eq(departments.id, id));
 };

@@ -14,6 +14,7 @@ import {
   MoreVertical,
   UserCheck,
   UserX,
+  X,
 } from "lucide-react";
 
 const ROLES = [
@@ -42,10 +43,13 @@ export default function AdminPanel() {
   const [loading, setLoading] = useState(true);
   const [error, setError] = useState("");
   const [searchQuery, setSearchQuery] = useState("");
+  const [departments, setDepartments] = useState<any[]>([]);
+  const [newDepartmentName, setNewDepartmentName] = useState("");
 
   useEffect(() => {
     fetchUsers();
     fetchPendingRegistrations();
+    fetchDepartments();
   }, []);
 
   const fetchUsers = async () => {
@@ -74,6 +78,50 @@ export default function AdminPanel() {
       }
     } catch (err: any) {
       console.error("Failed to fetch pending registrations:", err);
+    }
+  };
+
+  const fetchDepartments = async () => {
+    try {
+      const res = await fetch("/api/departments", { credentials: "include" });
+      if (res.ok) {
+        const data = await res.json();
+        setDepartments(data);
+      }
+    } catch (err: any) {
+      console.error("Failed to fetch departments:", err);
+    }
+  };
+
+  const handleCreateDepartment = async () => {
+    if (!newDepartmentName.trim()) return;
+    try {
+      const res = await fetch("/api/departments", {
+        method: "POST",
+        headers: { "Content-Type": "application/json" },
+        body: JSON.stringify({ name: newDepartmentName.trim() }),
+        credentials: "include",
+      });
+      if (!res.ok) throw new Error("Failed to create department");
+      const data = await res.json();
+      setDepartments([...departments, data.department]);
+      setNewDepartmentName("");
+    } catch (err: any) {
+      alert(err.message);
+    }
+  };
+
+  const handleDeleteDepartment = async (id: string, name: string) => {
+    if (!confirm(`Are you sure you want to delete department "${name}"?`)) return;
+    try {
+      const res = await fetch(`/api/departments/${id}`, {
+        method: "DELETE",
+        credentials: "include",
+      });
+      if (!res.ok) throw new Error("Failed to delete department");
+      setDepartments(departments.filter((d) => d.id !== id));
+    } catch (err: any) {
+      alert(err.message);
     }
   };
 
@@ -137,6 +185,28 @@ export default function AdminPanel() {
 
       setUsers(
         users.map((u) => (u.id === userId ? { ...u, plant: newPlant } : u)),
+      );
+    } catch (err: any) {
+      alert(err.message);
+    }
+  };
+
+  const handleDepartmentChange = async (userId: string, newDept: string) => {
+    try {
+      const res = await fetch(`/api/users/${userId}/department`, {
+        method: "PUT",
+        headers: { "Content-Type": "application/json" },
+        body: JSON.stringify({ department: newDept }),
+        credentials: "include",
+      });
+      if (res.status === 401) {
+        window.location.href = "/login";
+        return;
+      }
+      if (!res.ok) throw new Error("Failed to update department");
+
+      setUsers(
+        users.map((u) => (u.id === userId ? { ...u, department: newDept } : u)),
       );
     } catch (err: any) {
       alert(err.message);
@@ -284,7 +354,7 @@ export default function AdminPanel() {
         </div>
 
         {/* Search & Management */}
-        <div className="bg-white p-4 rounded-2xl border border-slate-200 shadow-sm">
+        <div className="bg-white p-4 rounded-2xl border border-slate-200 shadow-sm flex flex-col md:flex-row gap-4 justify-between items-center">
           <div className="relative w-full max-w-md">
             <Search className="absolute left-4 top-1/2 -translate-y-1/2 h-4 w-4 text-slate-400" />
             <input
@@ -295,7 +365,40 @@ export default function AdminPanel() {
               className="w-full pl-11 pr-4 py-2.5 bg-slate-50 border border-slate-200 rounded-xl focus:ring-2 focus:ring-blue-500 focus:border-blue-500 outline-none transition-all text-sm font-medium"
             />
           </div>
+          <div className="flex gap-2 w-full md:w-auto">
+            <input
+              type="text"
+              placeholder="Add New Department..."
+              value={newDepartmentName}
+              onChange={(e) => setNewDepartmentName(e.target.value)}
+              className="w-full md:w-48 px-4 py-2 bg-slate-50 border border-slate-200 rounded-xl focus:ring-2 focus:ring-blue-500 outline-none text-sm font-medium"
+            />
+            <button
+              onClick={handleCreateDepartment}
+              className="px-4 py-2 bg-blue-600 hover:bg-blue-700 text-white text-sm font-bold rounded-xl transition-all whitespace-nowrap"
+            >
+              Add
+            </button>
+          </div>
         </div>
+        
+        {/* active departments */}
+        {departments.length > 0 && (
+          <div className="flex flex-wrap gap-2 px-1">
+            {departments.map(d => (
+              <div key={d.id} className="flex items-center gap-2 px-3 py-1.5 bg-slate-100/80 border border-slate-200 rounded-lg text-sm text-slate-700 font-medium">
+                <span>{d.name}</span>
+                <button 
+                  onClick={() => handleDeleteDepartment(d.id, d.name)}
+                  className="text-slate-400 hover:text-rose-500 hover:bg-rose-50 p-0.5 rounded transition-all"
+                  title="Delete Department"
+                >
+                  <X className="w-3.5 h-3.5" />
+                </button>
+              </div>
+            ))}
+          </div>
+        )}
 
         {/* Pending Registrations */}
         {pendingRegistrations.length > 0 && (
@@ -374,6 +477,9 @@ export default function AdminPanel() {
                     <th className="px-6 py-4 text-[10px] font-bold text-slate-400 uppercase tracking-wider">
                       Plant Assignment
                     </th>
+                    <th className="px-6 py-4 text-[10px] font-bold text-slate-400 uppercase tracking-wider">
+                      Dept Assignment
+                    </th>
                     <th className="px-6 py-4 text-[10px] font-bold text-slate-400 uppercase tracking-wider text-right">
                       Actions
                     </th>
@@ -451,7 +557,34 @@ export default function AdminPanel() {
                           </div>
                         ) : (
                           <span className="text-xs text-slate-400 italic font-medium">
-                            Not Applicable
+                            -
+                          </span>
+                        )}
+                      </td>
+                      <td className="px-6 py-4">
+                        {u.role === "hod" ? (
+                          <div className="relative min-w-[140px]">
+                            <select
+                              value={u.department || ""}
+                              onChange={(e) =>
+                                handleDepartmentChange(u.id, e.target.value)
+                              }
+                              className="w-full pl-3 pr-8 py-1.5 bg-slate-50 border border-slate-200 rounded-lg text-xs font-bold text-slate-700 appearance-none focus:ring-2 focus:ring-blue-500 outline-none cursor-pointer"
+                            >
+                              <option value="">Select Dept</option>
+                              {departments.map((d) => (
+                                <option key={d.id} value={d.name}>
+                                  {d.name}
+                                </option>
+                              ))}
+                            </select>
+                            <div className="absolute right-2 top-1/2 -translate-y-1/2 pointer-events-none">
+                              <MoreVertical className="h-3 w-3 text-slate-400" />
+                            </div>
+                          </div>
+                        ) : (
+                          <span className="text-xs text-slate-400 italic font-medium">
+                            -
                           </span>
                         )}
                       </td>

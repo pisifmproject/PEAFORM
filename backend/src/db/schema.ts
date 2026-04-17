@@ -9,8 +9,15 @@ export const users = pgTable('users', {
   password: varchar('password', { length: 255 }).notNull(),
   role: varchar('role', { length: 50 }).notNull().default('user'),
   plant: varchar('plant', { length: 100 }),
+  department: varchar('department', { length: 100 }),
   created_at: timestamp('created_at').defaultNow().notNull(),
   updated_at: timestamp('updated_at').defaultNow().notNull(),
+});
+
+export const departments = pgTable('departments', {
+  id: uuid('id').primaryKey().defaultRandom(),
+  name: varchar('name', { length: 100 }).notNull().unique(),
+  created_at: timestamp('created_at').defaultNow().notNull(),
 });
 
 export const peaf_forms = pgTable('peaf_forms', {

@@ -91,7 +91,7 @@ export const getForms = async (req: AuthRequest, res: Response) => {
       return res.status(404).json({ error: 'User not found' });
     }
 
-    const forms = await formService.getFormsByUser(user.id, user.role, user.plant || undefined);
+    const forms = await formService.getFormsByUser(user.id, user.role, user.plant || undefined, user.department || undefined);
 
     res.json(forms);
   } catch (error: any) {

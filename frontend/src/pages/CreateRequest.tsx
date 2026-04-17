@@ -85,6 +85,22 @@ export default function CreateRequest() {
 
   const [showConfirmModal, setShowConfirmModal] = useState(false);
   const [selectedDocTypes, setSelectedDocTypes] = useState<string[]>([]);
+  const [departments, setDepartments] = useState<any[]>([]);
+
+  React.useEffect(() => {
+    const fetchDepartments = async () => {
+      try {
+        const res = await fetch("/api/departments", { credentials: "include" });
+        if (res.ok) {
+          const data = await res.json();
+          setDepartments(data);
+        }
+      } catch (err) {
+        console.error("Failed to fetch departments:", err);
+      }
+    };
+    fetchDepartments();
+  }, []);
 
   const handleCheckboxChange = (field: 'work_category' | 'technical_impact', value: string) => {
     setFormData(prev => {
@@ -304,13 +320,17 @@ export default function CreateRequest() {
               </div>
               <div className="space-y-1.5">
                 <label className="text-xs font-bold text-slate-500 uppercase tracking-wider">Department</label>
-                <input
-                  type="text"
+                <select
                   required
                   value={formData.department}
                   onChange={e => setFormData({...formData, department: e.target.value})}
-                  className="w-full px-4 py-2.5 bg-slate-50 border border-slate-200 rounded-xl focus:ring-2 focus:ring-blue-500 focus:border-blue-500 outline-none transition-all text-slate-900 font-medium"
-                />
+                  className="w-full px-4 py-2.5 bg-slate-50 border border-slate-200 rounded-xl focus:ring-2 focus:ring-blue-500 focus:border-blue-500 outline-none transition-all text-slate-900 font-medium appearance-none"
+                >
+                  <option value="" disabled>Select Department</option>
+                  {departments.map(d => (
+                    <option key={d.id} value={d.name}>{d.name}</option>
+                  ))}
+                </select>
               </div>
               <div className="space-y-1.5">
                 <label className="text-xs font-bold text-slate-500 uppercase tracking-wider">Plant / Location</label>

@@ -52,7 +52,7 @@ export const createForm = async (data: {
   return form;
 };
 
-export const getFormsByUser = async (user_id: string, role: string, plant?: string) => {
+export const getFormsByUser = async (user_id: string, role: string, plant?: string, user_department?: string) => {
   if (role === 'user') {
     // User hanya melihat request mereka sendiri
     return await db
@@ -60,8 +60,24 @@ export const getFormsByUser = async (user_id: string, role: string, plant?: stri
       .from(peaf_forms)
       .where(eq(peaf_forms.applicant_id, user_id))
       .orderBy(desc(peaf_forms.created_at));
+  } else if (role === 'hod' && plant && user_department) {
+    // HOD melihat: pending_hod (untuk approve) + approved (untuk info) DI DEPARTEMEN MEREKA
+    return await db
+      .select()
+      .from(peaf_forms)
+      .where(
+        and(
+          eq(peaf_forms.plant_location, plant),
+          eq(peaf_forms.department, user_department),
+          or(
+            eq(peaf_forms.status, 'pending_hod'),
+            eq(peaf_forms.status, 'approved')
+          )
+        )
+      )
+      .orderBy(desc(peaf_forms.created_at));
   } else if (role === 'hod' && plant) {
-    // HOD melihat: pending_hod (untuk approve) + approved (untuk info)
+    // Jika HOD tidak diassign, gunakan fallback tanpa filter departemen
     return await db
       .select()
       .from(peaf_forms)
