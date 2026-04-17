@@ -1,7 +1,7 @@
 import React, { ReactNode, useState, useEffect, useRef } from 'react';
 import { Link, useNavigate, useLocation } from 'react-router-dom';
 import { useAuth } from '../context/AuthContext';
-import { LayoutDashboard, FilePlus, LogOut, Users, FileText, Bell, Check } from 'lucide-react';
+import { LayoutDashboard, FilePlus, LogOut, Users, FileText, Bell, Check, User } from 'lucide-react';
 import { formatDistanceToNow } from 'date-fns';
 
 export default function Layout({ children }: { children: ReactNode }) {
@@ -136,6 +136,17 @@ export default function Layout({ children }: { children: ReactNode }) {
               <p className="text-xs text-gray-500 truncate">{getRoleLabel(user?.role || '')}</p>
             </div>
           </div>
+          <Link
+            to="/profile"
+            className={`flex items-center w-full px-4 py-2 mb-2 text-sm font-medium rounded-lg transition-colors ${
+              location.pathname === '/profile'
+                ? 'bg-blue-50 text-blue-700'
+                : 'text-gray-700 hover:bg-gray-100'
+            }`}
+          >
+            <User className={`w-5 h-5 mr-3 ${location.pathname === '/profile' ? 'text-blue-700' : 'text-gray-400'}`} />
+            My Profile
+          </Link>
           <button
             onClick={handleLogout}
             className="flex items-center w-full px-4 py-2 text-sm font-medium text-red-600 rounded-lg hover:bg-red-50 transition-colors"

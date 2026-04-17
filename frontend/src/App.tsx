@@ -13,6 +13,7 @@ import Dashboard from './pages/Dashboard';
 import CreateRequest from './pages/CreateRequest';
 import RequestDetail from './pages/RequestDetail';
 import AdminPanel from './pages/AdminPanel';
+import Profile from './pages/Profile';
 
 function PrivateRoute({ children }: { children: React.ReactNode }) {
   const { user, loading } = useAuth();
@@ -47,6 +48,11 @@ export default function App() {
           <Route path="/admin" element={
             <PrivateRoute>
               <AdminPanel />
+            </PrivateRoute>
+          } />
+          <Route path="/profile" element={
+            <PrivateRoute>
+              <Profile />
             </PrivateRoute>
           } />
         </Routes>

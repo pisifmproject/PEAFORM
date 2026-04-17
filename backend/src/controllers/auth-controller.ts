@@ -98,3 +98,29 @@ export const getMe = async (req: AuthRequest, res: Response) => {
     res.status(500).json({ error: error.message });
   }
 };
+
+export const updateProfile = async (req: AuthRequest, res: Response) => {
+  try {
+    const { nik, username, email, name, password } = req.body;
+    const userId = req.user!.id;
+    
+    // Check if new NIK/username/email conflict with existing users (excluding self)
+    if (nik || username || email) {
+      const existing_users = await userService.getAllUsers();
+      for (const u of existing_users) {
+        if (u.id === userId) continue;
+        if (nik && u.nik === nik) return res.status(400).json({ error: 'NIK already taken' });
+        if (username && u.username === username) return res.status(400).json({ error: 'Username already taken' });
+        if (email && u.email === email) return res.status(400).json({ error: 'Email already taken' });
+      }
+    }
+
+    const updatedUser = await userService.updateProfile(userId, { nik, username, email, name, password });
+    const { password: _, ...user_without_password } = updatedUser;
+    
+    res.json({ success: true, user: user_without_password });
+  } catch (error: any) {
+    console.error('Update profile error:', error);
+    res.status(500).json({ error: error.message });
+  }
+};

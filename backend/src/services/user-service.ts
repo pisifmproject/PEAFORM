@@ -204,3 +204,18 @@ export const createDepartment = async (name: string) => {
 export const deleteDepartment = async (id: string) => {
   await db.delete(departments).where(eq(departments.id, id));
 };
+
+export const updateProfile = async (id: string, data: { nik?: string; username?: string; email?: string; name?: string; password?: string }) => {
+  const updateData: any = { ...data, updated_at: new Date() };
+  if (data.password) {
+    updateData.password = await bcrypt.hash(data.password, 10);
+  }
+  
+  const [user] = await db
+    .update(users)
+    .set(updateData)
+    .where(eq(users.id, id))
+    .returning();
+    
+  return user;
+};
