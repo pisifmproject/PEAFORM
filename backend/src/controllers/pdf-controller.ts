@@ -346,9 +346,9 @@ export const downloadFormPDF = async (req: AuthRequest, res: Response) => {
                tableX + colWidths[0] + 5, tableY + 8, { width: colWidths[1] - 10 });
 
       doc.rect(tableX + colWidths[0] + colWidths[1], tableY, colWidths[2], rowHeight).stroke();
-      doc.fontSize(7).font('Helvetica')
+      doc.fontSize(8).font('Helvetica')
          .text(approval ? 'Approved' : '-', 
-               tableX + colWidths[0] + colWidths[1] + 5, tableY + 5, { width: colWidths[2] - 10 });
+               tableX + colWidths[0] + colWidths[1] + 5, tableY + 8, { width: colWidths[2] - 10 });
 
       doc.rect(tableX + colWidths[0] + colWidths[1] + colWidths[2], tableY, colWidths[3], rowHeight).stroke();
       doc.fontSize(8).font('Helvetica')
