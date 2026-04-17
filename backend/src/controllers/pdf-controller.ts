@@ -293,10 +293,10 @@ export const downloadFormPDF = async (req: AuthRequest, res: Response) => {
     currentY += engBoxHeight + 5;
 
     const roles = [
-      { role: 'Department Head', key: 'hod' },
       { role: 'Health, Safety & Environment', key: 'hse' },
-      { role: 'Factory Manager', key: 'factory_manager' },
-      { role: 'Project & Engineering Manager', key: 'engineering_manager' }
+      { role: 'Project & Engineering Manager', key: 'engineering_manager' },
+      { role: 'Department Head', key: 'hod' },
+      { role: 'Factory Manager', key: 'factory_manager' }
     ];
 
     // Section VI: Authorization Matrix
@@ -347,7 +347,7 @@ export const downloadFormPDF = async (req: AuthRequest, res: Response) => {
 
       doc.rect(tableX + colWidths[0] + colWidths[1], tableY, colWidths[2], rowHeight).stroke();
       doc.fontSize(7).font('Helvetica')
-         .text(approval ? 'Verified via PEAF System' : '-', 
+         .text(approval ? 'Approved' : '-', 
                tableX + colWidths[0] + colWidths[1] + 5, tableY + 5, { width: colWidths[2] - 10 });
 
       doc.rect(tableX + colWidths[0] + colWidths[1] + colWidths[2], tableY, colWidths[3], rowHeight).stroke();

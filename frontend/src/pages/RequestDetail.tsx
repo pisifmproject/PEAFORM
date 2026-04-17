@@ -433,10 +433,10 @@ export default function RequestDetail() {
                   </thead>
                   <tbody className="divide-y divide-slate-100">
                     {[
-                      { role: 'Head of Department (User)', key: 'hod' },
                       { role: 'HSE', key: 'hse' },
-                      { role: 'Factory Manager', key: 'factory_manager' },
-                      { role: 'Project & Engineering Manager', key: 'engineering_manager' }
+                      { role: 'Project & Engineering Manager', key: 'engineering_manager' },
+                      { role: 'Head of Department (User)', key: 'hod' },
+                      { role: 'Factory Manager', key: 'factory_manager' }
                     ].map((row) => {
                       const app = approvals.find((a: any) => a.role === row.key);
                       return (
@@ -447,7 +447,7 @@ export default function RequestDetail() {
                             {app ? (
                               <div className="flex items-center gap-2 text-blue-600">
                                 <CheckCircle2 className="w-4 h-4" />
-                                <span className="text-xs font-serif italic font-bold">Verified via PEAF System</span>
+                                <span className="text-xs font-serif italic font-bold">Approved</span>
                               </div>
                             ) : (
                               <span className="text-slate-300 text-sm">-</span>

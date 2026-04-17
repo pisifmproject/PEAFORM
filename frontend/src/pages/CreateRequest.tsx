@@ -28,7 +28,8 @@ const WORK_CATEGORIES = [
   'Electrical (Panel / Cabling / Power Distribution)',
   'Automation & Control (PLC / HMI / SCADA / Instrumentation)',
   'Utilities (Boiler, Compressor, HVAC, Water, WWTP)',
-  'Safety Improvement / Compliance'
+  'Safety Improvement / Compliance',
+  'Other'
 ];
 
 const TECHNICAL_IMPACTS = [
@@ -80,6 +81,7 @@ export default function CreateRequest() {
   });
 
   const [uploadingDoc, setUploadingDoc] = useState<string | null>(null);
+  const [otherWorkCategory, setOtherWorkCategory] = useState('');
 
   const [showConfirmModal, setShowConfirmModal] = useState(false);
   const [selectedDocTypes, setSelectedDocTypes] = useState<string[]>([]);
@@ -194,9 +196,15 @@ export default function CreateRequest() {
     const allFiles = Object.values(formData.supporting_documents).flat();
     const menuItems = selectedDocTypes.map(type => ({ isMenu: true, type }));
 
+    let finalWorkCategory = [...formData.work_category];
+    if (finalWorkCategory.includes('Other')) {
+        finalWorkCategory = finalWorkCategory.map(c => c === 'Other' && otherWorkCategory.trim() ? `Other: ${otherWorkCategory}` : c);
+    }
+
     // Prepend Rp. before sending to server
     const submitData = {
       ...formData,
+      work_category: finalWorkCategory,
       supporting_documents: [...menuItems, ...allFiles],
       budget_estimate: formData.budget_estimate ? `Rp ${formData.budget_estimate}` : ''
     };
@@ -332,15 +340,27 @@ export default function CreateRequest() {
                 <label className="text-xs font-bold text-slate-500 uppercase tracking-wider block mb-4">Work Category</label>
                 <div className="grid grid-cols-1 sm:grid-cols-2 gap-3">
                   {WORK_CATEGORIES.map((category) => (
-                    <label key={category} className="flex items-center gap-3 p-3 rounded-xl border border-slate-100 hover:bg-slate-50 transition-colors cursor-pointer group">
-                      <input
-                        type="checkbox"
-                        checked={formData.work_category.includes(category)}
-                        onChange={() => handleCheckboxChange('work_category', category)}
-                        className="h-5 w-5 rounded-md border-slate-300 text-blue-600 focus:ring-blue-500 transition-all"
-                      />
-                      <span className="text-sm text-slate-700 group-hover:text-slate-900 transition-colors">{category}</span>
-                    </label>
+                    <div key={category} className="flex flex-col gap-2">
+                       <label className="flex items-center gap-3 p-3 rounded-xl border border-slate-100 hover:bg-slate-50 transition-colors cursor-pointer group">
+                         <input
+                           type="checkbox"
+                           checked={formData.work_category.includes(category)}
+                           onChange={() => handleCheckboxChange('work_category', category)}
+                           className="h-5 w-5 rounded-md border-slate-300 text-blue-600 focus:ring-blue-500 transition-all"
+                         />
+                         <span className="text-sm text-slate-700 group-hover:text-slate-900 transition-colors">{category}</span>
+                       </label>
+                       {category === 'Other' && formData.work_category.includes('Other') && (
+                         <input
+                           type="text"
+                           value={otherWorkCategory}
+                           onChange={(e) => setOtherWorkCategory(e.target.value)}
+                           className="w-full px-4 py-2 mt-1 bg-white border border-slate-200 rounded-xl focus:ring-2 focus:ring-blue-500 focus:border-blue-500 outline-none text-sm transition-all"
+                           placeholder="Please specify..."
+                           required
+                         />
+                       )}
+                    </div>
                   ))}
                 </div>
               </div>

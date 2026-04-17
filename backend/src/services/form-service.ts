@@ -45,7 +45,7 @@ export const createForm = async (data: {
     .values({
       ...data,
       document_no,
-      status: 'pending_hod',
+      status: 'pending_hse',
     })
     .returning();
 

@@ -69,9 +69,9 @@ export const createForm = async (req: AuthRequest, res: Response) => {
     // Update form with renamed documents
     await formService.updateFormDocuments(form.id, renamedDocuments);
 
-    // Notify HODs at the same plant
+    // Notify HSE at the same plant
     await notificationService.notifyApprovers(
-      'hod',
+      'hse',
       plant_location,
       `New PEAF request requires your approval (${form.document_no})`,
       form.id
@@ -215,35 +215,35 @@ export const approveForm = async (req: AuthRequest, res: Response) => {
       let next_role = '';
       let new_status = '';
 
-      if (current_status === 'pending_hod') {
-        new_status = 'pending_hse';
-        next_role = 'hse';
-      } else if (current_status === 'pending_hse') {
-        new_status = 'pending_factory_manager';
-        next_role = 'factory_manager';
-      } else if (current_status === 'pending_factory_manager') {
+      if (current_status === 'pending_hse') {
         new_status = 'pending_engineering_manager';
         next_role = 'engineering_manager';
       } else if (current_status === 'pending_engineering_manager') {
+        new_status = 'pending_hod';
+        next_role = 'hod';
+      } else if (current_status === 'pending_hod') {
+        new_status = 'pending_factory_manager';
+        next_role = 'factory_manager';
+      } else if (current_status === 'pending_factory_manager') {
         new_status = 'approved';
 
         // Broadcast to all approvers at the same plant
         await notificationService.notifyApprovers(
           'hod',
           form.plant_location,
-          `PEAF request (${form.document_no}) has been fully approved by Engineering Manager.`,
+          `PEAF request (${form.document_no}) has been fully approved by Factory Manager.`,
           form.id
         );
         await notificationService.notifyApprovers(
           'hse',
           form.plant_location,
-          `PEAF request (${form.document_no}) has been fully approved by Engineering Manager.`,
+          `PEAF request (${form.document_no}) has been fully approved by Factory Manager.`,
           form.id
         );
         await notificationService.notifyApprovers(
-          'factory_manager',
+          'engineering_manager',
           form.plant_location,
-          `PEAF request (${form.document_no}) has been fully approved by Engineering Manager.`,
+          `PEAF request (${form.document_no}) has been fully approved by Factory Manager.`,
           form.id
         );
 
