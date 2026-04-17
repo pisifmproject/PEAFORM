@@ -8,14 +8,28 @@ export const register = async (req: AuthRequest, res: Response) => {
   try {
     const { nik, username, email, name, password } = req.body;
 
+    // Check if user already exists in users table
     const existing_user = await userService.findUserByIdentifier(nik);
     if (existing_user) {
       return res.status(400).json({ error: 'User already exists' });
     }
 
-    await userService.createUser({ nik, username, email, name, password });
+    // Check if registration already pending
+    const existing_pending = await userService.findPendingRegistrationByIdentifier(nik);
+    if (existing_pending) {
+      return res.status(400).json({ error: 'Registration already pending approval' });
+    }
 
-    res.json({ success: true });
+    // Create pending registration instead of direct user creation
+    await userService.createPendingRegistration({ nik, username, email, name, password });
+
+    // Notify all admins
+    await userService.notifyAdminsOfNewRegistration(name);
+
+    res.json({ 
+      success: true, 
+      message: 'Registration submitted successfully. Please wait for admin approval.' 
+    });
   } catch (error: any) {
     console.error('Register error:', error);
     res.status(400).json({ error: error.message });

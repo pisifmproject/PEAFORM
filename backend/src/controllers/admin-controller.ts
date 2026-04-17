@@ -65,3 +65,49 @@ export const deleteUser = async (req: AuthRequest, res: Response) => {
     res.status(500).json({ error: error.message });
   }
 };
+
+export const getPendingRegistrations = async (req: AuthRequest, res: Response) => {
+  if (req.user?.role !== 'admin') {
+    return res.status(403).json({ error: 'Forbidden' });
+  }
+
+  try {
+    const pending = await userService.getAllPendingRegistrations();
+    const sanitized = pending.map((p) => {
+      const { password, ...rest } = p;
+      return rest;
+    });
+    res.json(sanitized);
+  } catch (error: any) {
+    console.error('Get pending registrations error:', error);
+    res.status(500).json({ error: error.message });
+  }
+};
+
+export const approvePendingRegistration = async (req: AuthRequest, res: Response) => {
+  if (req.user?.role !== 'admin') {
+    return res.status(403).json({ error: 'Forbidden' });
+  }
+
+  try {
+    await userService.approvePendingRegistration(req.params.id);
+    res.json({ success: true, message: 'Registration approved successfully' });
+  } catch (error: any) {
+    console.error('Approve registration error:', error);
+    res.status(500).json({ error: error.message });
+  }
+};
+
+export const rejectPendingRegistration = async (req: AuthRequest, res: Response) => {
+  if (req.user?.role !== 'admin') {
+    return res.status(403).json({ error: 'Forbidden' });
+  }
+
+  try {
+    await userService.rejectPendingRegistration(req.params.id);
+    res.json({ success: true, message: 'Registration rejected successfully' });
+  } catch (error: any) {
+    console.error('Reject registration error:', error);
+    res.status(500).json({ error: error.message });
+  }
+};

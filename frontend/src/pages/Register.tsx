@@ -24,6 +24,7 @@ export default function Register() {
     confirmPassword: "",
   });
   const [error, setError] = useState("");
+  const [success, setSuccess] = useState(false);
   const [loading, setLoading] = useState(false);
   const [showPassword, setShowPassword] = useState(false);
   const [showConfirmPassword, setShowConfirmPassword] = useState(false);
@@ -36,6 +37,7 @@ export default function Register() {
   const handleSubmit = async (e: React.FormEvent) => {
     e.preventDefault();
     setError("");
+    setSuccess(false);
 
     if (formData.password !== formData.confirmPassword) {
       return setError("Passwords do not match");
@@ -56,7 +58,8 @@ export default function Register() {
         throw new Error(data.error || "Registration failed");
       }
 
-      navigate("/login");
+      setSuccess(true);
+      // Don't navigate immediately, show success message
     } catch (err: any) {
       setError(err.message);
     } finally {
@@ -158,6 +161,30 @@ export default function Register() {
                 >
                   <div className="w-1.5 h-1.5 rounded-full bg-red-600" />
                   {error}
+                </motion.div>
+              )}
+
+              {success && (
+                <motion.div
+                  initial={{ opacity: 0, scale: 0.95 }}
+                  animate={{ opacity: 1, scale: 1 }}
+                  className="bg-green-50 border border-green-200 text-green-700 p-5 rounded-xl"
+                >
+                  <div className="flex items-start gap-3">
+                    <BadgeCheck className="w-6 h-6 text-green-600 flex-shrink-0 mt-0.5" />
+                    <div>
+                      <h3 className="font-bold text-sm mb-1">Registration Submitted!</h3>
+                      <p className="text-sm leading-relaxed">
+                        Your registration has been submitted successfully. Please wait for admin approval before you can login.
+                      </p>
+                      <Link
+                        to="/login"
+                        className="inline-flex items-center gap-2 mt-3 text-sm font-bold text-green-700 hover:text-green-800 transition-colors"
+                      >
+                        Go to Login <ArrowRight className="w-4 h-4" />
+                      </Link>
+                    </div>
+                  </div>
                 </motion.div>
               )}
 

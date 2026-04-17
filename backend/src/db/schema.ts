@@ -51,3 +51,14 @@ export const notifications = pgTable('notifications', {
   is_read: boolean('is_read').notNull().default(false),
   created_at: timestamp('created_at').defaultNow().notNull(),
 });
+
+export const pending_registrations = pgTable('pending_registrations', {
+  id: uuid('id').primaryKey().defaultRandom(),
+  nik: varchar('nik', { length: 50 }).notNull().unique(),
+  username: varchar('username', { length: 100 }).notNull().unique(),
+  email: varchar('email', { length: 255 }).notNull().unique(),
+  name: varchar('name', { length: 255 }).notNull(),
+  password: varchar('password', { length: 255 }).notNull(),
+  status: varchar('status', { length: 50 }).notNull().default('pending'),
+  created_at: timestamp('created_at').defaultNow().notNull(),
+});

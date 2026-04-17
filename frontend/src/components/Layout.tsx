@@ -52,12 +52,18 @@ export default function Layout({ children }: { children: ReactNode }) {
     }
   };
 
-  const markAsRead = async (id: string, formId: string) => {
+  const markAsRead = async (id: string, formId: string | null, message: string) => {
     try {
       await fetch(`/api/notifications/${id}/read`, { method: 'POST' });
       setNotifications(prev => prev.map(n => n.id === id ? { ...n, is_read: true } : n));
       setShowNotifications(false);
-      navigate(`/request/${formId}`);
+      
+      // Check if this is a registration notification
+      if (!formId && message.includes('registration')) {
+        navigate('/admin');
+      } else if (formId) {
+        navigate(`/request/${formId}`);
+      }
     } catch (error) {
       console.error('Failed to mark notification as read', error);
     }
@@ -180,7 +186,7 @@ export default function Layout({ children }: { children: ReactNode }) {
                       {notifications.map((notification) => (
                         <div
                           key={notification.id}
-                          onClick={() => markAsRead(notification.id, notification.form_id)}
+                          onClick={() => markAsRead(notification.id, notification.form_id, notification.message)}
                           className={`p-4 cursor-pointer hover:bg-gray-50 transition-colors ${!notification.is_read ? 'bg-blue-50/50' : ''}`}
                         >
                           <p className={`text-sm ${!notification.is_read ? 'font-medium text-gray-900' : 'text-gray-600'}`}>

@@ -38,12 +38,14 @@ const ROLE_DISPLAY_NAMES: Record<string, string> = {
 export default function AdminPanel() {
   const { user } = useAuth();
   const [users, setUsers] = useState<any[]>([]);
+  const [pendingRegistrations, setPendingRegistrations] = useState<any[]>([]);
   const [loading, setLoading] = useState(true);
   const [error, setError] = useState("");
   const [searchQuery, setSearchQuery] = useState("");
 
   useEffect(() => {
     fetchUsers();
+    fetchPendingRegistrations();
   }, []);
 
   const fetchUsers = async () => {
@@ -60,6 +62,18 @@ export default function AdminPanel() {
       setError(err.message);
     } finally {
       setLoading(false);
+    }
+  };
+
+  const fetchPendingRegistrations = async () => {
+    try {
+      const res = await fetch("/api/pending-registrations", { credentials: "include" });
+      if (res.ok) {
+        const data = await res.json();
+        setPendingRegistrations(data);
+      }
+    } catch (err: any) {
+      console.error("Failed to fetch pending registrations:", err);
     }
   };
 
@@ -157,6 +171,41 @@ export default function AdminPanel() {
     }
   };
 
+  const handleApproveRegistration = async (id: string, name: string) => {
+    if (!confirm(`Approve registration for "${name}"?`)) return;
+
+    try {
+      const res = await fetch(`/api/pending-registrations/${id}/approve`, {
+        method: "POST",
+        credentials: "include",
+      });
+      if (!res.ok) throw new Error("Failed to approve registration");
+
+      setPendingRegistrations(pendingRegistrations.filter((p) => p.id !== id));
+      fetchUsers(); // Refresh user list
+      alert(`Registration for ${name} approved successfully!`);
+    } catch (err: any) {
+      alert(err.message);
+    }
+  };
+
+  const handleRejectRegistration = async (id: string, name: string) => {
+    if (!confirm(`Reject registration for "${name}"? This action cannot be undone.`)) return;
+
+    try {
+      const res = await fetch(`/api/pending-registrations/${id}/reject`, {
+        method: "POST",
+        credentials: "include",
+      });
+      if (!res.ok) throw new Error("Failed to reject registration");
+
+      setPendingRegistrations(pendingRegistrations.filter((p) => p.id !== id));
+      alert(`Registration for ${name} rejected.`);
+    } catch (err: any) {
+      alert(err.message);
+    }
+  };
+
   if (user?.role !== "admin") {
     return (
       <Layout>
@@ -247,6 +296,57 @@ export default function AdminPanel() {
             />
           </div>
         </div>
+
+        {/* Pending Registrations */}
+        {pendingRegistrations.length > 0 && (
+          <div className="bg-amber-50 border border-amber-200 rounded-2xl p-6 shadow-sm">
+            <div className="flex items-center gap-3 mb-4">
+              <div className="bg-amber-100 p-2 rounded-lg">
+                <UserPlus className="w-5 h-5 text-amber-600" />
+              </div>
+              <div>
+                <h3 className="text-lg font-bold text-slate-900">Pending Registrations</h3>
+                <p className="text-sm text-slate-600">Review and approve new user registrations</p>
+              </div>
+            </div>
+            <div className="space-y-3">
+              {pendingRegistrations.map((pending) => (
+                <div
+                  key={pending.id}
+                  className="bg-white p-4 rounded-xl border border-amber-200 flex items-center justify-between"
+                >
+                  <div className="flex items-center gap-4">
+                    <div className="h-12 w-12 rounded-xl bg-amber-100 flex items-center justify-center text-base font-bold text-amber-700">
+                      {pending.name?.charAt(0)}
+                    </div>
+                    <div>
+                      <p className="text-sm font-bold text-slate-900">{pending.name}</p>
+                      <p className="text-xs text-slate-500">
+                        {pending.email} • NIK: {pending.nik}
+                      </p>
+                    </div>
+                  </div>
+                  <div className="flex items-center gap-2">
+                    <button
+                      onClick={() => handleApproveRegistration(pending.id, pending.name)}
+                      className="px-4 py-2 bg-green-600 hover:bg-green-700 text-white text-sm font-bold rounded-lg transition-all flex items-center gap-2"
+                    >
+                      <CheckCircle2 className="w-4 h-4" />
+                      Approve
+                    </button>
+                    <button
+                      onClick={() => handleRejectRegistration(pending.id, pending.name)}
+                      className="px-4 py-2 bg-rose-600 hover:bg-rose-700 text-white text-sm font-bold rounded-lg transition-all flex items-center gap-2"
+                    >
+                      <UserX className="w-4 h-4" />
+                      Reject
+                    </button>
+                  </div>
+                </div>
+              ))}
+            </div>
+          </div>
+        )}
 
         {/* Users Table */}
         <div className="bg-white rounded-2xl border border-slate-200 shadow-sm overflow-hidden">
