@@ -219,7 +219,7 @@ export default function Register() {
                     name="username"
                     type="text"
                     required
-                    placeholder="johndoe"
+                    placeholder="septian"
                     value={formData.username}
                     onChange={handleChange}
                     className="block w-full rounded-2xl border-slate-200 bg-slate-50/50 py-3.5 px-4 text-slate-900 placeholder:text-slate-400 focus:ring-2 focus:ring-blue-600 focus:border-transparent focus:bg-white transition-all sm:text-sm outline-none border"
@@ -243,7 +243,7 @@ export default function Register() {
                     name="name"
                     type="text"
                     required
-                    placeholder="John Doe"
+                    placeholder="Septian Bagus Jumantoro"
                     value={formData.name}
                     onChange={handleChange}
                     className="block w-full rounded-2xl border-slate-200 bg-slate-50/50 py-3.5 pl-12 pr-4 text-slate-900 placeholder:text-slate-400 focus:ring-2 focus:ring-blue-600 focus:border-transparent focus:bg-white transition-all sm:text-sm outline-none border"
@@ -267,7 +267,7 @@ export default function Register() {
                     name="email"
                     type="email"
                     required
-                    placeholder="john@example.com"
+                    placeholder="septian.jumantoro@icbp.indofood.co.id"
                     value={formData.email}
                     onChange={handleChange}
                     className="block w-full rounded-2xl border-slate-200 bg-slate-50/50 py-3.5 pl-12 pr-4 text-slate-900 placeholder:text-slate-400 focus:ring-2 focus:ring-blue-600 focus:border-transparent focus:bg-white transition-all sm:text-sm outline-none border"
