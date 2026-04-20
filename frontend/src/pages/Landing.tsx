@@ -1,5 +1,5 @@
 import { Link } from 'react-router-dom';
-import { FileText, ArrowRight, CheckCircle, Shield, Zap, BarChart3 } from 'lucide-react';
+import { FileText, ArrowRight } from 'lucide-react';
 import { motion } from 'motion/react';
 
 export default function Landing() {
@@ -50,9 +50,6 @@ export default function Landing() {
             animate={{ opacity: 1, y: 0 }}
             transition={{ duration: 0.5 }}
           >
-            <span className="inline-flex items-center gap-2 px-3 py-1 rounded-full bg-blue-50 text-blue-700 text-xs font-bold uppercase tracking-wider mb-6 border border-blue-100">
-              <Zap className="w-3 h-3" /> Enterprise Grade Approval System
-            </span>
             <h1 className="text-5xl sm:text-7xl font-extrabold tracking-tight text-slate-900 mb-8 max-w-4xl mx-auto leading-[1.1]">
               Project & Engineering <span className="text-blue-600">Approval Workflow</span>
             </h1>
@@ -77,53 +74,7 @@ export default function Landing() {
         </div>
       </section>
 
-      {/* Features Section */}
-      <section className="py-24 bg-slate-50 border-y border-slate-100">
-        <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8">
-          <div className="text-center mb-16">
-            <h2 className="text-3xl font-bold text-slate-900 sm:text-4xl tracking-tight">Engineered for Excellence</h2>
-            <p className="mt-4 text-lg text-slate-600">Everything you need to manage complex engineering approvals.</p>
-          </div>
-          
-          <div className="grid grid-cols-1 md:grid-cols-3 gap-8">
-            {[
-              {
-                title: "Digital Integrity",
-                desc: "Replace fragmented paper trails with a single source of truth. Secure, immutable, and fully searchable.",
-                icon: Shield,
-                color: "text-blue-600",
-                bg: "bg-blue-50"
-              },
-              {
-                title: "Smart Routing",
-                desc: "Automated workflow distribution to HOD, HSE, Factory Managers, and Project Engineering Managers based on plant location and project scope.",
-                icon: Zap,
-                color: "text-amber-600",
-                bg: "bg-amber-50"
-              },
-              {
-                title: "Real-time Analytics",
-                desc: "Monitor approval bottlenecks and project timelines with our centralized tracking dashboard.",
-                icon: BarChart3,
-                color: "text-emerald-600",
-                bg: "bg-emerald-50"
-              }
-            ].map((feature, i) => (
-              <motion.div
-                key={i}
-                whileHover={{ y: -5 }}
-                className="bg-white p-8 rounded-2xl border border-slate-200 shadow-sm hover:shadow-md transition-all"
-              >
-                <div className={`${feature.bg} ${feature.color} w-12 h-12 rounded-xl flex items-center justify-center mb-6`}>
-                  <feature.icon className="w-6 h-6" />
-                </div>
-                <h3 className="text-xl font-bold text-slate-900 mb-3">{feature.title}</h3>
-                <p className="text-slate-600 leading-relaxed">{feature.desc}</p>
-              </motion.div>
-            ))}
-          </div>
-        </div>
-      </section>
+
 
       {/* Footer */}
       <footer className="py-12 bg-white">
