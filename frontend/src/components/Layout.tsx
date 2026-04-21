@@ -1,3 +1,4 @@
+import { API_BASE_URL } from '../lib/api';
 import React, { ReactNode, useState, useEffect, useRef } from 'react';
 import { Link, useNavigate, useLocation } from 'react-router-dom';
 import { useAuth } from '../context/AuthContext';
@@ -42,7 +43,7 @@ export default function Layout({ children }: { children: ReactNode }) {
 
   const fetchNotifications = async () => {
     try {
-      const res = await fetch('/api/notifications');
+      const res = await fetch(`${API_BASE_URL}/api/notifications`);
       if (res.ok) {
         const data = await res.json();
         setNotifications(data);
@@ -54,7 +55,7 @@ export default function Layout({ children }: { children: ReactNode }) {
 
   const markAsRead = async (id: string, formId: string | null, message: string) => {
     try {
-      await fetch(`/api/notifications/${id}/read`, { method: 'POST' });
+      await fetch(`${API_BASE_URL}/api/notifications/${id}/read`, { method: 'POST' });
       setNotifications(prev => prev.map(n => n.id === id ? { ...n, is_read: true } : n));
       setShowNotifications(false);
       
@@ -71,7 +72,7 @@ export default function Layout({ children }: { children: ReactNode }) {
 
   const markAllAsRead = async () => {
     try {
-      await fetch('/api/notifications/read-all', { method: 'POST' });
+      await fetch(`${API_BASE_URL}/api/notifications/read-all`, { method: 'POST' });
       setNotifications(prev => prev.map(n => ({ ...n, is_read: true })));
     } catch (error) {
       console.error('Failed to mark all as read', error);
@@ -79,7 +80,7 @@ export default function Layout({ children }: { children: ReactNode }) {
   };
 
   const handleLogout = async () => {
-    await fetch('/api/auth/logout', { method: 'POST' });
+    await fetch(`${API_BASE_URL}/api/auth/logout`, { method: 'POST' });
     setUser(null);
     navigate('/login');
   };

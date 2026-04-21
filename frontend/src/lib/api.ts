@@ -1,7 +1,7 @@
 // API Base URL - automatically switches between dev and production
 export const API_BASE_URL = import.meta.env.DEV
-  ? "http://localhost:3002"
-  : "http://10.125.48.102:3002";
+  ? ""
+  : "/peaf";
 
 // Helper function for API calls
 export async function apiCall(endpoint: string, options?: RequestInit) {

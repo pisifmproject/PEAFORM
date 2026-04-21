@@ -1,3 +1,4 @@
+import { API_BASE_URL } from '../lib/api';
 import React, { useState } from 'react';
 import { useNavigate } from 'react-router-dom';
 import Layout from '../components/Layout';
@@ -90,7 +91,7 @@ export default function CreateRequest() {
   React.useEffect(() => {
     const fetchDepartments = async () => {
       try {
-        const res = await fetch("/api/departments", { credentials: "include" });
+        const res = await fetch(`${API_BASE_URL}/api/departments`, { credentials: "include" });
         if (res.ok) {
           const data = await res.json();
           setDepartments(data);
@@ -146,7 +147,7 @@ export default function CreateRequest() {
       const formData = new FormData();
       fileArray.forEach(file => formData.append('files', file));
 
-      const res = await fetch('/api/forms/upload', {
+      const res = await fetch(`${API_BASE_URL}/api/forms/upload`, {
         method: 'POST',
         credentials: 'include',
         body: formData
@@ -226,7 +227,7 @@ export default function CreateRequest() {
     };
 
     try {
-      const res = await fetch('/api/forms', {
+      const res = await fetch(`${API_BASE_URL}/api/forms`, {
         method: 'POST',
         headers: { 'Content-Type': 'application/json' },
         body: JSON.stringify(submitData),

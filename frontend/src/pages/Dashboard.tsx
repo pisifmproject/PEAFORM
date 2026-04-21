@@ -1,3 +1,4 @@
+import { API_BASE_URL } from '../lib/api';
 import React, { useState, useEffect, useMemo } from 'react';
 import { Link } from 'react-router-dom';
 import Layout from '../components/Layout';
@@ -32,7 +33,7 @@ export default function Dashboard() {
   const plants = ['Plant Cikupa', 'Plant Cikokol', 'Plant Semarang'];
 
   useEffect(() => {
-    fetch('/api/forms', { credentials: 'include' })
+    fetch(`${API_BASE_URL}/api/forms`, { credentials: 'include' })
       .then(res => {
         if (res.status === 401) {
           window.location.href = '/login';
@@ -340,7 +341,7 @@ export default function Dashboard() {
                         <div className="flex items-center justify-end gap-2">
                           {form.status === 'approved' && (
                             <button
-                              onClick={() => window.open(`/api/forms/${form.id}/pdf`, '_blank')}
+                              onClick={() => window.open(`${API_BASE_URL}/api/forms/${form.id}/pdf`, '_blank')}
                               className="inline-flex items-center gap-1 px-3 py-1.5 text-xs font-bold text-emerald-600 hover:text-emerald-700 hover:bg-emerald-50 rounded-lg transition-all"
                             >
                               <Download className="w-3.5 h-3.5" />

@@ -1,3 +1,4 @@
+import { API_BASE_URL } from '../lib/api';
 import React, { useState, useEffect } from "react";
 import Layout from "../components/Layout";
 import { useAuth } from "../context/AuthContext";
@@ -54,7 +55,7 @@ export default function Profile() {
     }
 
     try {
-      const res = await fetch("/api/auth/profile", {
+      const res = await fetch(`${API_BASE_URL}/api/auth/profile`, {
         method: "PUT",
         headers: {
           "Content-Type": "application/json",

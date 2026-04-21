@@ -53,14 +53,14 @@ Write-Host ""
 
 # Step 4: Deploy Frontend
 Write-Host "[4/5] Deploying Frontend..." -ForegroundColor Yellow
-$xamppDir = "C:\xampp\htdocs\peaform"
-if (Test-Path $xamppDir) {
-    Remove-Item -Path "$xamppDir\*" -Recurse -Force
+$deployDir = "C:\MyServer\htdocs\peaf"
+if (Test-Path $deployDir) {
+    Remove-Item -Path "$deployDir\*" -Recurse -Force
 } else {
-    New-Item -ItemType Directory -Path $xamppDir -Force | Out-Null
+    New-Item -ItemType Directory -Path $deployDir -Force | Out-Null
 }
-Copy-Item -Path "$projectPath\frontend\dist\*" -Destination $xamppDir -Recurse -Force
-Write-Host "OK Frontend deployed to $xamppDir" -ForegroundColor Green
+Copy-Item -Path "$projectPath\frontend\dist\*" -Destination $deployDir -Recurse -Force
+Write-Host "OK Frontend deployed to $deployDir" -ForegroundColor Green
 Write-Host ""
 
 # Step 5: Apache Config & Restart
@@ -80,11 +80,11 @@ Write-Host "=================================================" -ForegroundColor 
 Write-Host ""
 Write-Host "Website:" -ForegroundColor Cyan
 Write-Host "  Local: http://localhost:9000/" -ForegroundColor White
-Write-Host "  Network: http://10.125.48.102:9000/" -ForegroundColor White
+Write-Host "  Network: http://10.125.48.102/peaf/" -ForegroundColor White
 Write-Host ""
 Write-Host "Login:" -ForegroundColor Cyan
 Write-Host "  Username: admin" -ForegroundColor White
-Write-Host "  Password: password123" -ForegroundColor White
+Write-Host "  Password: peaf123" -ForegroundColor White
 Write-Host ""
 Write-Host "Backend Status:" -ForegroundColor Yellow
 pm2 list

@@ -1,3 +1,4 @@
+import { API_BASE_URL } from '../lib/api';
 import React, { useState, useEffect, useMemo } from "react";
 import Layout from "../components/Layout";
 import { useAuth } from "../context/AuthContext";
@@ -54,7 +55,7 @@ export default function AdminPanel() {
 
   const fetchUsers = async () => {
     try {
-      const res = await fetch("/api/users", { credentials: "include" });
+      const res = await fetch(`${API_BASE_URL}/api/users`, { credentials: "include" });
       if (res.status === 401) {
         window.location.href = "/login";
         return;
@@ -71,7 +72,7 @@ export default function AdminPanel() {
 
   const fetchPendingRegistrations = async () => {
     try {
-      const res = await fetch("/api/pending-registrations", { credentials: "include" });
+      const res = await fetch(`${API_BASE_URL}/api/pending-registrations`, { credentials: "include" });
       if (res.ok) {
         const data = await res.json();
         setPendingRegistrations(data);
@@ -83,7 +84,7 @@ export default function AdminPanel() {
 
   const fetchDepartments = async () => {
     try {
-      const res = await fetch("/api/departments", { credentials: "include" });
+      const res = await fetch(`${API_BASE_URL}/api/departments`, { credentials: "include" });
       if (res.ok) {
         const data = await res.json();
         setDepartments(data);
@@ -96,7 +97,7 @@ export default function AdminPanel() {
   const handleCreateDepartment = async () => {
     if (!newDepartmentName.trim()) return;
     try {
-      const res = await fetch("/api/departments", {
+      const res = await fetch(`${API_BASE_URL}/api/departments`, {
         method: "POST",
         headers: { "Content-Type": "application/json" },
         body: JSON.stringify({ name: newDepartmentName.trim() }),
@@ -114,7 +115,7 @@ export default function AdminPanel() {
   const handleDeleteDepartment = async (id: string, name: string) => {
     if (!confirm(`Are you sure you want to delete department "${name}"?`)) return;
     try {
-      const res = await fetch(`/api/departments/${id}`, {
+      const res = await fetch(`${API_BASE_URL}/api/departments/${id}`, {
         method: "DELETE",
         credentials: "include",
       });
@@ -149,7 +150,7 @@ export default function AdminPanel() {
 
   const handleRoleChange = async (userId: string, newRole: string) => {
     try {
-      const res = await fetch(`/api/users/${userId}/role`, {
+      const res = await fetch(`${API_BASE_URL}/api/users/${userId}/role`, {
         method: "PUT",
         headers: { "Content-Type": "application/json" },
         body: JSON.stringify({ role: newRole }),
@@ -171,7 +172,7 @@ export default function AdminPanel() {
 
   const handlePlantChange = async (userId: string, newPlant: string) => {
     try {
-      const res = await fetch(`/api/users/${userId}/plant`, {
+      const res = await fetch(`${API_BASE_URL}/api/users/${userId}/plant`, {
         method: "PUT",
         headers: { "Content-Type": "application/json" },
         body: JSON.stringify({ plant: newPlant }),
@@ -193,7 +194,7 @@ export default function AdminPanel() {
 
   const handleDepartmentChange = async (userId: string, newDept: string) => {
     try {
-      const res = await fetch(`/api/users/${userId}/department`, {
+      const res = await fetch(`${API_BASE_URL}/api/users/${userId}/department`, {
         method: "PUT",
         headers: { "Content-Type": "application/json" },
         body: JSON.stringify({ department: newDept }),
@@ -222,7 +223,7 @@ export default function AdminPanel() {
       return;
 
     try {
-      const res = await fetch(`/api/users/${userId}`, {
+      const res = await fetch(`${API_BASE_URL}/api/users/${userId}`, {
         method: "DELETE",
         credentials: "include",
       });
@@ -245,7 +246,7 @@ export default function AdminPanel() {
     if (!confirm(`Approve registration for "${name}"?`)) return;
 
     try {
-      const res = await fetch(`/api/pending-registrations/${id}/approve`, {
+      const res = await fetch(`${API_BASE_URL}/api/pending-registrations/${id}/approve`, {
         method: "POST",
         credentials: "include",
       });
@@ -263,7 +264,7 @@ export default function AdminPanel() {
     if (!confirm(`Reject registration for "${name}"? This action cannot be undone.`)) return;
 
     try {
-      const res = await fetch(`/api/pending-registrations/${id}/reject`, {
+      const res = await fetch(`${API_BASE_URL}/api/pending-registrations/${id}/reject`, {
         method: "POST",
         credentials: "include",
       });

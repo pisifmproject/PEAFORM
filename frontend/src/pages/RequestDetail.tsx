@@ -1,3 +1,4 @@
+import { API_BASE_URL } from '../lib/api';
 import React, { useState, useEffect } from 'react';
 import { useParams, useNavigate } from 'react-router-dom';
 import Layout from '../components/Layout';
@@ -38,7 +39,7 @@ export default function RequestDetail() {
   const [submitting, setSubmitting] = useState(false);
 
   useEffect(() => {
-    fetch(`/api/forms/${id}`)
+    fetch(`${API_BASE_URL}/api/forms/${id}`)
       .then(res => {
         if (!res.ok) throw new Error('Failed to fetch request');
         return res.json();
@@ -49,7 +50,7 @@ export default function RequestDetail() {
   }, [id]);
 
   const handleDownloadFile = (filename: string) => {
-    window.open(`/api/forms/download/${filename}`, '_blank');
+    window.open(`${API_BASE_URL}/api/forms/download/${filename}`, '_blank');
   };
 
   const handleApprove = async (e: React.FormEvent) => {
@@ -60,7 +61,7 @@ export default function RequestDetail() {
     setError('');
 
     try {
-      const res = await fetch(`/api/forms/${id}/approve`, {
+      const res = await fetch(`${API_BASE_URL}/api/forms/${id}/approve`, {
         method: 'POST',
         headers: { 'Content-Type': 'application/json' },
         body: JSON.stringify({ status: approvalStatus, notes: approvalNotes })
@@ -72,7 +73,7 @@ export default function RequestDetail() {
       }
 
       // Refresh data
-      const updatedRes = await fetch(`/api/forms/${id}`);
+      const updatedRes = await fetch(`${API_BASE_URL}/api/forms/${id}`);
       const updatedData = await updatedRes.json();
       setData(updatedData);
       setApprovalStatus('');
