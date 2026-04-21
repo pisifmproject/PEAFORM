@@ -54,7 +54,9 @@ Write-Host ""
 # Step 4: Deploy Frontend
 Write-Host "[4/5] Deploying Frontend..." -ForegroundColor Yellow
 $xamppDir = "C:\xampp\htdocs\peaform"
-if (-not (Test-Path $xamppDir)) {
+if (Test-Path $xamppDir) {
+    Remove-Item -Path "$xamppDir\*" -Recurse -Force
+} else {
     New-Item -ItemType Directory -Path $xamppDir -Force | Out-Null
 }
 Copy-Item -Path "$projectPath\frontend\dist\*" -Destination $xamppDir -Recurse -Force
