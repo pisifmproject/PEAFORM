@@ -1,6 +1,6 @@
 import { eq, or } from 'drizzle-orm';
 import { db } from '../db/index.js';
-import { users, pending_registrations, notifications, departments } from '../db/schema.js';
+import { users, pending_registrations, notifications, departments, peaf_approvals } from '../db/schema.js';
 import bcrypt from 'bcryptjs';
 
 export const createUser = async (data: {
@@ -72,6 +72,12 @@ export const updateUserPlant = async (id: string, plant: string) => {
 };
 
 export const deleteUser = async (id: string) => {
+  // Hapus semua data terkait dulu (foreign key constraint)
+  // 1. Hapus notifikasi milik user
+  await db.delete(notifications).where(eq(notifications.user_id, id));
+  // 2. Hapus approvals yang dilakukan oleh user ini
+  await db.delete(peaf_approvals).where(eq(peaf_approvals.approver_id, id));
+  // 3. Baru hapus user-nya
   await db.delete(users).where(eq(users.id, id));
 };
 

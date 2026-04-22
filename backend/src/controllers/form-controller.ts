@@ -5,6 +5,13 @@ import * as userService from '../services/user-service.js';
 import * as notificationService from '../services/notification-service.js';
 import { renameUploadedFile } from '../config/upload.js';
 
+// HOD dengan dept ini handle semua 3 plant
+const MULTI_PLANT_DEPARTMENTS = ['PDQC', 'Manufacturing'];
+const isMultiPlantHod = (user: any) =>
+  user.role === 'hod' && MULTI_PLANT_DEPARTMENTS.some(
+    (d) => d.toLowerCase() === (user.department || '').toLowerCase()
+  );
+
 export const createForm = async (req: AuthRequest, res: Response) => {
   try {
     const {
@@ -117,7 +124,8 @@ export const getFormById = async (req: AuthRequest, res: Response) => {
       return res.status(403).json({ error: 'Forbidden' });
     }
     if (['hod', 'hse', 'factory_manager'].includes(user.role)) {
-      if (form.plant_location !== user.plant) {
+      // HOD PDQC/Manufacturing boleh lihat form dari semua plant
+      if (!isMultiPlantHod(user) && form.plant_location !== user.plant) {
         return res.status(403).json({ error: 'Forbidden: This request is for a different plant.' });
       }
     }
@@ -146,8 +154,9 @@ export const approveForm = async (req: AuthRequest, res: Response) => {
     }
 
     // Plant check for specific roles - MUST match plant
+    // HOD PDQC/Manufacturing dikecualikan karena handle semua plant
     if (['hod', 'hse', 'factory_manager'].includes(user.role)) {
-      if (form.plant_location !== user.plant) {
+      if (!isMultiPlantHod(user) && form.plant_location !== user.plant) {
         return res.status(403).json({ error: 'You can only approve requests for your assigned plant.' });
       }
     }

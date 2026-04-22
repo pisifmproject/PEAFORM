@@ -1,7 +1,10 @@
-import { eq, desc, and, gte, lt, sql, or } from 'drizzle-orm';
+import { eq, desc, and, gte, lt, sql, or, isNull } from 'drizzle-orm';
 import { db } from '../db/index.js';
 import { peaf_forms, peaf_approvals, users } from '../db/schema.js';
 import { toRoman } from '../config/roman-numerals.js';
+
+// HOD dengan dept ini handle semua 3 plant, tidak perlu plant assignment
+const MULTI_PLANT_DEPARTMENTS = ['PDQC', 'Manufacturing'];
 
 export const createForm = async (data: {
   applicant_id: string;
@@ -59,6 +62,21 @@ export const getFormsByUser = async (user_id: string, role: string, plant?: stri
       .select()
       .from(peaf_forms)
       .where(eq(peaf_forms.applicant_id, user_id))
+      .orderBy(desc(peaf_forms.created_at));
+  } else if (role === 'hod' && !plant && user_department && MULTI_PLANT_DEPARTMENTS.some(d => d.toLowerCase() === user_department.toLowerCase())) {
+    // HOD PDQC/Manufacturing: tidak ada plant assignment → lihat semua plant, filter per dept
+    return await db
+      .select()
+      .from(peaf_forms)
+      .where(
+        and(
+          eq(peaf_forms.department, user_department),
+          or(
+            eq(peaf_forms.status, 'pending_hod'),
+            eq(peaf_forms.status, 'approved')
+          )
+        )
+      )
       .orderBy(desc(peaf_forms.created_at));
   } else if (role === 'hod' && plant && user_department) {
     // HOD melihat: pending_hod (untuk approve) + approved (untuk info) DI DEPARTEMEN MEREKA

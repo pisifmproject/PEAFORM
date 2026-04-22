@@ -28,6 +28,9 @@ const ROLES = [
 ];
 const PLANTS = ["Plant Cikupa", "Plant Cikokol", "Plant Semarang"];
 
+// HOD dengan department ini tidak perlu plant karena handle semua 3 plant
+const MULTI_PLANT_DEPARTMENTS = ["PDQC", "Manufacturing"];
+
 const ROLE_DISPLAY_NAMES: Record<string, string> = {
   admin: "ADMINISTRATOR",
   user: "USER",
@@ -537,25 +540,34 @@ export default function AdminPanel() {
                       </td>
                       <td className="px-6 py-4">
                         {["hod", "hse", "factory_manager"].includes(u.role) ? (
-                          <div className="relative min-w-[140px]">
-                            <select
-                              value={u.plant || ""}
-                              onChange={(e) =>
-                                handlePlantChange(u.id, e.target.value)
-                              }
-                              className="w-full pl-3 pr-8 py-1.5 bg-slate-50 border border-slate-200 rounded-lg text-xs font-bold text-slate-700 appearance-none focus:ring-2 focus:ring-blue-500 outline-none cursor-pointer"
-                            >
-                              <option value="">Select Plant</option>
-                              {PLANTS.map((plant) => (
-                                <option key={plant} value={plant}>
-                                  {plant}
-                                </option>
-                              ))}
-                            </select>
-                            <div className="absolute right-2 top-1/2 -translate-y-1/2 pointer-events-none">
-                              <MapPin className="h-3 w-3 text-slate-400" />
+                          u.role === "hod" && MULTI_PLANT_DEPARTMENTS.some(
+                            (d) => u.department?.toLowerCase() === d.toLowerCase()
+                          ) ? (
+                            <span className="inline-flex items-center gap-1 text-xs font-bold text-indigo-600 bg-indigo-50 px-2 py-1 rounded-md">
+                              <MapPin className="h-3 w-3" />
+                              All Plants
+                            </span>
+                          ) : (
+                            <div className="relative min-w-[140px]">
+                              <select
+                                value={u.plant || ""}
+                                onChange={(e) =>
+                                  handlePlantChange(u.id, e.target.value)
+                                }
+                                className="w-full pl-3 pr-8 py-1.5 bg-slate-50 border border-slate-200 rounded-lg text-xs font-bold text-slate-700 appearance-none focus:ring-2 focus:ring-blue-500 outline-none cursor-pointer"
+                              >
+                                <option value="">Select Plant</option>
+                                {PLANTS.map((plant) => (
+                                  <option key={plant} value={plant}>
+                                    {plant}
+                                  </option>
+                                ))}
+                              </select>
+                              <div className="absolute right-2 top-1/2 -translate-y-1/2 pointer-events-none">
+                                <MapPin className="h-3 w-3 text-slate-400" />
+                              </div>
                             </div>
-                          </div>
+                          )
                         ) : (
                           <span className="text-xs text-slate-400 italic font-medium">
                             -
