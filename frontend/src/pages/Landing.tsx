@@ -4,7 +4,7 @@ import { motion } from 'motion/react';
 
 export default function Landing() {
   return (
-    <div className="min-h-screen bg-white font-sans selection:bg-blue-100 selection:text-blue-900">
+    <div className="min-h-screen flex flex-col bg-white font-sans selection:bg-blue-100 selection:text-blue-900">
       {/* Navigation */}
       <nav className="fixed top-0 inset-x-0 z-50 bg-white/80 backdrop-blur-md border-b border-slate-100">
         <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8">
@@ -37,14 +37,14 @@ export default function Landing() {
       </nav>
 
       {/* Hero Section */}
-      <section className="relative pt-32 pb-20 lg:pt-48 lg:pb-32 overflow-hidden">
+      <section className="relative flex-grow flex flex-col justify-center pt-32 pb-20 overflow-hidden">
         {/* Abstract Background Elements */}
         <div className="absolute top-0 left-1/2 -translate-x-1/2 w-full h-full -z-10 pointer-events-none">
           <div className="absolute top-[-10%] left-[-10%] w-[40%] h-[60%] bg-blue-50 rounded-full blur-[120px] opacity-60" />
           <div className="absolute bottom-[-10%] right-[-10%] w-[30%] h-[50%] bg-indigo-50 rounded-full blur-[100px] opacity-50" />
         </div>
 
-        <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 text-center">
+        <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 text-center w-full">
           <motion.div
             initial={{ opacity: 0, y: 20 }}
             animate={{ opacity: 1, y: 0 }}
@@ -74,21 +74,11 @@ export default function Landing() {
         </div>
       </section>
 
-
-
       {/* Footer */}
-      <footer className="py-12 bg-white">
+      <footer className="py-8 bg-white mt-auto">
         <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 border-t border-slate-100 pt-8">
-          <div className="flex flex-col md:flex-row justify-between items-center gap-6">
-            <div className="flex items-center gap-2">
-              {/* <FileText className="h-5 w-5 text-blue-600" /> */}
-              {/* <span className="font-bold text-slate-900">PEAF SYSTEM</span> */}
-            </div>
-            <p className="text-sm text-slate-500">© 2026 PT Indofood Fortuna Makmur. All rights reserved.</p>
-            <div className="flex gap-6">
-              {/* <a href="#" className="text-sm text-slate-400 hover:text-slate-600 transition-colors">Privacy Policy</a>
-              <a href="#" className="text-sm text-slate-400 hover:text-slate-600 transition-colors">Terms of Service</a> */}
-            </div>
+          <div className="flex justify-center items-center">
+            <p className="text-sm text-slate-500 text-center">© 2026 PT Indofood Fortuna Makmur. All rights reserved.</p>
           </div>
         </div>
       </footer>
