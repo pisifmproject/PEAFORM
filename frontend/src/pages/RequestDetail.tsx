@@ -26,6 +26,10 @@ import {
 } from 'lucide-react';
 
 export default function RequestDetail() {
+  const parseDateLocal = (dateStr: string | null | undefined) => {
+    if (!dateStr) return new Date();
+    return new Date(typeof dateStr === 'string' ? dateStr.replace('Z', '') : dateStr);
+  };
   const { id } = useParams();
   const navigate = useNavigate();
   const { user } = useAuth();
@@ -212,7 +216,7 @@ export default function RequestDetail() {
                 </div>
                 <div className="flex items-center gap-2">
                   <Calendar className="w-4 h-4" />
-                  <span>Submitted on {format(new Date(form.submission_date), 'MMMM dd, yyyy')}</span>
+                  <span>Submitted on {format(parseDateLocal(form.submission_date), 'MMMM dd, yyyy')}</span>
                 </div>
               </div>
             </div>
@@ -455,7 +459,7 @@ export default function RequestDetail() {
                             )}
                           </td>
                           <td className="px-6 py-4 text-sm text-slate-500">
-                            {app ? format(new Date(app.created_at), 'MMM dd, yyyy') : '-'}
+                            {app ? format(parseDateLocal(app.created_at), 'MMM dd, yyyy') : '-'}
                           </td>
                         </tr>
                       );
@@ -583,7 +587,7 @@ export default function RequestDetail() {
                               approval.status === 'Rejected' ? 'text-rose-600' : 'text-emerald-600'
                             }`}>{approval.status}</span>
                           </div>
-                          <span className="text-xs font-medium text-slate-400">{format(new Date(approval.created_at), 'MMM dd, yyyy • HH:mm')}</span>
+                          <span className="text-xs font-medium text-slate-400">{format(parseDateLocal(approval.created_at), 'MMM dd, yyyy • HH:mm')}</span>
                         </div>
                         <p className="text-sm text-slate-600 leading-relaxed italic">"{approval.notes || 'No comments provided.'}"</p>
                         <div className="mt-4 flex items-center gap-2">

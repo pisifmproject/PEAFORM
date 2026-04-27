@@ -22,6 +22,10 @@ import {
 } from 'lucide-react';
 
 export default function Dashboard() {
+  const parseDateLocal = (dateStr: string | null | undefined) => {
+    if (!dateStr) return new Date();
+    return new Date(typeof dateStr === 'string' ? dateStr.replace('Z', '') : dateStr);
+  };
   const { user } = useAuth();
   const [forms, setForms] = useState<any[]>([]);
   const [loading, setLoading] = useState(true);
@@ -126,9 +130,9 @@ export default function Dashboard() {
     // Sort
     result.sort((a, b) => {
       if (sortBy === 'newest') {
-        return new Date(b.created_at).getTime() - new Date(a.created_at).getTime();
+        return parseDateLocal(b.created_at).getTime() - parseDateLocal(a.created_at).getTime();
       } else if (sortBy === 'oldest') {
-        return new Date(a.created_at).getTime() - new Date(b.created_at).getTime();
+        return parseDateLocal(a.created_at).getTime() - parseDateLocal(b.created_at).getTime();
       } else if (sortBy === 'document_no') {
         const docA = a.document_no || '';
         const docB = b.document_no || '';
@@ -331,7 +335,7 @@ export default function Dashboard() {
                       </td>
                       <td className="px-6 py-4">
                         <span className="text-sm text-slate-500">
-                          {form.submission_date ? format(new Date(form.submission_date), 'MMM dd, yyyy') : 'N/A'}
+                          {form.submission_date ? format(parseDateLocal(form.submission_date), 'MMM dd, yyyy') : 'N/A'}
                         </span>
                       </td>
                       <td className="px-6 py-4">
