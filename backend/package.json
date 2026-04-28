@@ -12,7 +12,8 @@
     "db:studio": "drizzle-kit studio",
     "clear-requests": "tsx src/scripts/clear-requests.ts",
     "clean-orphan-files": "tsx src/scripts/clean-orphan-files.ts",
-    "clear-docpeaform": "tsx src/scripts/clear-docpeaform-folder.ts"
+    "clear-docpeaform": "tsx src/scripts/clear-docpeaform-folder.ts",
+    "force-clear-all": "tsx src/scripts/force-clear-all.ts"
   },
   "dependencies": {
     "@types/pdfkit": "^0.17.5",
