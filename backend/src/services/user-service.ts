@@ -2,7 +2,7 @@ import { eq, or } from 'drizzle-orm';
 import { db } from '../db/index.js';
 import { users, pending_registrations, notifications, departments, peaf_approvals } from '../db/schema.js';
 import bcrypt from 'bcryptjs';
-import { sendNewRegistrationEmailToAdmin } from './email-service.js';
+import { sendNewRegistrationEmailToAdmin, sendApprovalEmailToUser } from './email-service.js';
 
 export const createUser = async (data: {
   nik: string;
@@ -158,6 +158,18 @@ export const approvePendingRegistration = async (id: string) => {
 
   // Delete pending registration
   await db.delete(pending_registrations).where(eq(pending_registrations.id, id));
+
+  // Kirim email notifikasi approval ke user
+  try {
+    await sendApprovalEmailToUser({
+      userEmail: user.email,
+      userName: user.name,
+      userNik: user.nik,
+      userUsername: user.username,
+    });
+  } catch (emailErr: any) {
+    console.error(`[EMAIL] Gagal kirim email approval ke user ${user.email}:`, emailErr.message);
+  }
 
   return user;
 };
