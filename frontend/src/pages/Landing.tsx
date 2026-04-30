@@ -51,7 +51,7 @@ export default function Landing() {
             transition={{ duration: 0.5 }}
           >
             <h1 className="text-5xl sm:text-7xl font-extrabold tracking-tight text-slate-900 mb-8 max-w-4xl mx-auto leading-[1.1]">
-              Project & Engineering <span className="text-blue-600">Approval Workflow</span>
+              Project & Engineering <span className="text-blue-600">Approval Form</span>
             </h1>
             <p className="text-lg sm:text-xl text-slate-600 mb-10 max-w-2xl mx-auto leading-relaxed">
               Accelerate your engineering lifecycle with our streamlined digital approval platform. Built for precision and total transparency.
