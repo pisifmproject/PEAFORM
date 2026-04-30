@@ -21,10 +21,15 @@ export const register = async (req: AuthRequest, res: Response) => {
     }
 
     // Create pending registration instead of direct user creation
-    await userService.createPendingRegistration({ nik, username, email, name, password });
+    const pending = await userService.createPendingRegistration({ nik, username, email, name, password });
 
-    // Notify all admins
-    await userService.notifyAdminsOfNewRegistration(name);
+    // Notify all admins (in-app + email)
+    await userService.notifyAdminsOfNewRegistration(name, {
+      nik,
+      email,
+      username,
+      registrationId: pending.id,
+    });
 
     res.json({ 
       success: true, 

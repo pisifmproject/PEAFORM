@@ -2,6 +2,7 @@ import { eq, or } from 'drizzle-orm';
 import { db } from '../db/index.js';
 import { users, pending_registrations, notifications, departments, peaf_approvals } from '../db/schema.js';
 import bcrypt from 'bcryptjs';
+import { sendNewRegistrationEmailToAdmin } from './email-service.js';
 
 export const createUser = async (data: {
   nik: string;
@@ -165,23 +166,50 @@ export const rejectPendingRegistration = async (id: string) => {
   await db.delete(pending_registrations).where(eq(pending_registrations.id, id));
 };
 
-export const notifyAdminsOfNewRegistration = async (userName: string) => {
+export const notifyAdminsOfNewRegistration = async (
+  userName: string,
+  registrantData?: {
+    nik: string;
+    email: string;
+    username: string;
+    registrationId: string;
+  }
+) => {
   // Get all admin users
   const admins = await db
     .select()
     .from(users)
     .where(eq(users.role, 'admin'));
 
-  // Create notification for each admin
-  const notificationPromises = admins.map(admin =>
-    db.insert(notifications).values({
+  // Create in-app notification + kirim email untuk setiap admin
+  const promises = admins.map(async (admin) => {
+    // 1. In-app notification (tetap ada)
+    await db.insert(notifications).values({
       user_id: admin.id,
       message: `New user registration from ${userName} is pending approval`,
       is_read: false,
-    })
-  );
+    });
 
-  await Promise.all(notificationPromises);
+    // 2. Email notification (jika admin punya email & data registran tersedia)
+    if (admin.email && registrantData) {
+      try {
+        await sendNewRegistrationEmailToAdmin({
+          adminEmail: admin.email,
+          adminName: admin.name,
+          registrantName: userName,
+          registrantNik: registrantData.nik,
+          registrantEmail: registrantData.email,
+          registrantUsername: registrantData.username,
+          registrationId: registrantData.registrationId,
+        });
+      } catch (emailErr: any) {
+        // Jangan sampai email error menggagalkan registrasi
+        console.error(`[EMAIL] Gagal kirim email ke admin ${admin.email}:`, emailErr.message);
+      }
+    }
+  });
+
+  await Promise.all(promises);
 };
 
 export const updateUserDepartment = async (id: string, department: string) => {

@@ -16,6 +16,7 @@
     "force-clear-all": "tsx src/scripts/force-clear-all.ts"
   },
   "dependencies": {
+    "@types/nodemailer": "^8.0.0",
     "@types/pdfkit": "^0.17.5",
     "bcryptjs": "^3.0.3",
     "cookie-parser": "^1.4.7",
@@ -26,6 +27,7 @@
     "express": "^4.21.2",
     "jsonwebtoken": "^9.0.3",
     "multer": "^2.1.1",
+    "nodemailer": "^8.0.7",
     "pdfkit": "^0.18.0",
     "pg": "^8.13.1"
   },
