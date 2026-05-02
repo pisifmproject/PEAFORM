@@ -1,5 +1,5 @@
 import { db } from '../db/index.js';
-import { peaf_forms, peaf_approvals, notifications } from '../db/schema.js';
+import { peaf_forms, peaf_approvals, notifications, peaf_qna } from '../db/schema.js';
 import { eq } from 'drizzle-orm';
 import * as fs from 'fs';
 import * as path from 'path';
@@ -27,6 +27,7 @@ async function forceClearAll() {
     let deletedRequests = 0;
     let deletedApprovals = 0;
     let deletedNotifications = 0;
+    let deletedQna = 0;
 
     // Process each form
     for (const form of formsToDelete) {
@@ -64,6 +65,12 @@ async function forceClearAll() {
         .returning();
       deletedNotifications += notificationsResult.length;
 
+      // 3.5. Delete QnA
+      const qnaResult = await db.delete(peaf_qna)
+        .where(eq(peaf_qna.form_id, form.id))
+        .returning();
+      deletedQna += qnaResult.length;
+
       // 4. Delete form
       await db.delete(peaf_forms).where(eq(peaf_forms.id, form.id));
       deletedRequests++;
@@ -77,6 +84,7 @@ async function forceClearAll() {
     console.log(`📎 Files deleted: ${deletedFiles}`);
     console.log(`✔️  Approvals deleted: ${deletedApprovals}`);
     console.log(`🔔 Notifications deleted: ${deletedNotifications}`);
+    console.log(`💬 QnA/Chat deleted: ${deletedQna}`);
     console.log('\n✨ Cleanup completed!\n');
 
   } catch (error: any) {
