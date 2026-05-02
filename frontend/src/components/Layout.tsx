@@ -2,7 +2,7 @@ import { API_BASE_URL } from '../lib/api';
 import React, { ReactNode, useState, useEffect, useRef } from 'react';
 import { Link, useNavigate, useLocation } from 'react-router-dom';
 import { useAuth } from '../context/AuthContext';
-import { LayoutDashboard, FilePlus, LogOut, Users, FileText, Bell, Check, User } from 'lucide-react';
+import { LayoutDashboard, FilePlus, LogOut, Users, FileText, Bell, Check, User, MessageSquare, X } from 'lucide-react';
 import { formatDistanceToNow } from 'date-fns';
 
 export default function Layout({ children }: { children: ReactNode }) {
@@ -11,6 +11,8 @@ export default function Layout({ children }: { children: ReactNode }) {
   const location = useLocation();
   const [notifications, setNotifications] = useState<any[]>([]);
   const [showNotifications, setShowNotifications] = useState(false);
+  const [toast, setToast] = useState<{ id: string; message: string; formId: string | null } | null>(null);
+  const prevNotifsRef = useRef<any[]>([]);
   const dropdownRef = useRef<HTMLDivElement>(null);
 
   const getRoleLabel = (role: string) => {
@@ -27,7 +29,7 @@ export default function Layout({ children }: { children: ReactNode }) {
 
   useEffect(() => {
     fetchNotifications();
-    const interval = setInterval(fetchNotifications, 30000); // Poll every 30s
+    const interval = setInterval(fetchNotifications, 5000); // Poll every 5s
     return () => clearInterval(interval);
   }, []);
 
@@ -46,6 +48,19 @@ export default function Layout({ children }: { children: ReactNode }) {
       const res = await fetch(`${API_BASE_URL}/api/notifications`);
       if (res.ok) {
         const data = await res.json();
+        
+        if (prevNotifsRef.current.length > 0 && data.length > 0) {
+          const prevIds = new Set(prevNotifsRef.current.map((n: any) => n.id));
+          const newUnread = data.filter((n: any) => !n.is_read && !prevIds.has(n.id));
+          
+          if (newUnread.length > 0) {
+            const latest = newUnread[0];
+            setToast({ id: latest.id, message: latest.message, formId: latest.form_id });
+            setTimeout(() => setToast(prev => prev?.id === latest.id ? null : prev), 5000);
+          }
+        }
+        
+        prevNotifsRef.current = data;
         setNotifications(data);
       }
     } catch (error) {
@@ -57,6 +72,8 @@ export default function Layout({ children }: { children: ReactNode }) {
     try {
       await fetch(`${API_BASE_URL}/api/notifications/${id}/read`, { method: 'POST' });
       setNotifications(prev => prev.map(n => n.id === id ? { ...n, is_read: true } : n));
+      prevNotifsRef.current = prevNotifsRef.current.map((n:any) => n.id === id ? { ...n, is_read: true } : n);
+      if (toast?.id === id) setToast(null);
       setShowNotifications(false);
       
       // Check if this is a registration notification
@@ -74,6 +91,8 @@ export default function Layout({ children }: { children: ReactNode }) {
     try {
       await fetch(`${API_BASE_URL}/api/notifications/read-all`, { method: 'POST' });
       setNotifications(prev => prev.map(n => ({ ...n, is_read: true })));
+      prevNotifsRef.current = prevNotifsRef.current.map((n:any) => ({ ...n, is_read: true }));
+      setToast(null);
     } catch (error) {
       console.error('Failed to mark all as read', error);
     }
@@ -97,9 +116,9 @@ export default function Layout({ children }: { children: ReactNode }) {
   const unreadCount = notifications.filter(n => !n.is_read).length;
 
   return (
-    <div className="min-h-screen bg-gray-50 flex">
+    <div className="min-h-screen bg-gray-50 flex relative">
       {/* Sidebar */}
-      <aside className="w-64 bg-white border-r border-gray-200 flex flex-col sticky top-0 h-screen flex-shrink-0">
+      <aside className="w-64 bg-white border-r border-gray-200 flex flex-col sticky top-0 h-screen flex-shrink-0 z-40">
         <div className="h-20 flex flex-col justify-center px-6 border-b border-gray-200">
           <div className="flex items-center">
             <FileText className="w-6 h-6 text-blue-600 mr-2" />
@@ -160,7 +179,7 @@ export default function Layout({ children }: { children: ReactNode }) {
 
       {/* Main Content */}
       <main className="flex-1 flex flex-col min-w-0">
-        <header className="h-16 bg-white border-b border-gray-200 flex items-center justify-between px-8 sticky top-0 z-40">
+        <header className="h-16 bg-white border-b border-gray-200 flex items-center justify-between px-8 sticky top-0 z-30">
           <h1 className="text-xl font-semibold text-gray-900">
             {navItems.find(item => item.path === location.pathname)?.name || 'PEAF System'}
           </h1>
@@ -168,23 +187,26 @@ export default function Layout({ children }: { children: ReactNode }) {
           <div className="relative" ref={dropdownRef}>
             <button
               onClick={() => setShowNotifications(!showNotifications)}
-              className="relative p-2 text-gray-400 hover:text-gray-500 focus:outline-none"
+              className="relative p-2 text-gray-400 hover:text-gray-500 focus:outline-none transition-transform active:scale-95"
             >
               <span className="sr-only">View notifications</span>
               <Bell className="h-6 w-6" />
               {unreadCount > 0 && (
-                <span className="absolute top-1 right-1 block h-2.5 w-2.5 rounded-full bg-red-500 ring-2 ring-white" />
+                <span className="absolute top-1 right-1 flex h-3 w-3">
+                  <span className="animate-ping absolute inline-flex h-full w-full rounded-full bg-red-400 opacity-75"></span>
+                  <span className="relative inline-flex rounded-full h-3 w-3 bg-red-500 border-2 border-white"></span>
+                </span>
               )}
             </button>
 
             {showNotifications && (
-              <div className="absolute right-0 mt-2 w-80 origin-top-right rounded-md bg-white shadow-lg ring-1 ring-black ring-opacity-5 focus:outline-none z-50">
-                <div className="p-4 border-b border-gray-100 flex justify-between items-center">
-                  <h3 className="text-sm font-semibold text-gray-900">Notifications</h3>
+              <div className="absolute right-0 mt-2 w-80 origin-top-right rounded-2xl bg-white shadow-2xl shadow-blue-900/10 border border-slate-100 focus:outline-none z-50 overflow-hidden">
+                <div className="p-4 border-b border-slate-100 flex justify-between items-center bg-slate-50/50">
+                  <h3 className="text-sm font-bold text-slate-900">Notifications</h3>
                   {unreadCount > 0 && (
                     <button
                       onClick={markAllAsRead}
-                      className="text-xs text-blue-600 hover:text-blue-800 flex items-center"
+                      className="text-xs font-bold text-blue-600 hover:text-blue-800 flex items-center transition-colors"
                     >
                       <Check className="w-3 h-3 mr-1" /> Mark all read
                     </button>
@@ -192,21 +214,31 @@ export default function Layout({ children }: { children: ReactNode }) {
                 </div>
                 <div className="max-h-96 overflow-y-auto">
                   {notifications.length === 0 ? (
-                    <div className="p-4 text-sm text-gray-500 text-center">No notifications</div>
+                    <div className="p-8 flex flex-col items-center justify-center text-center">
+                      <Bell className="w-8 h-8 text-slate-200 mb-3" />
+                      <p className="text-sm font-bold text-slate-400">No notifications</p>
+                    </div>
                   ) : (
-                    <div className="divide-y divide-gray-100">
+                    <div className="divide-y divide-slate-100">
                       {notifications.map((notification) => (
                         <div
                           key={notification.id}
                           onClick={() => markAsRead(notification.id, notification.form_id, notification.message)}
-                          className={`p-4 cursor-pointer hover:bg-gray-50 transition-colors ${!notification.is_read ? 'bg-blue-50/50' : ''}`}
+                          className={`p-4 cursor-pointer hover:bg-slate-50 transition-all ${!notification.is_read ? 'bg-blue-50/50' : ''}`}
                         >
-                          <p className={`text-sm ${!notification.is_read ? 'font-medium text-gray-900' : 'text-gray-600'}`}>
-                            {notification.message}
-                          </p>
-                          <p className="text-xs text-gray-400 mt-1">
-                            {formatDistanceToNow(new Date(notification.created_at), { addSuffix: true })}
-                          </p>
+                          <div className="flex gap-3">
+                            {!notification.is_read && (
+                              <div className="mt-1.5 h-2 w-2 flex-shrink-0 rounded-full bg-blue-500" />
+                            )}
+                            <div>
+                              <p className={`text-sm ${!notification.is_read ? 'font-bold text-slate-900' : 'font-medium text-slate-600'}`}>
+                                {notification.message}
+                              </p>
+                              <p className="text-xs font-medium text-slate-400 mt-1.5">
+                                {formatDistanceToNow(new Date(notification.created_at), { addSuffix: true })}
+                              </p>
+                            </div>
+                          </div>
                         </div>
                       ))}
                     </div>
@@ -222,6 +254,31 @@ export default function Layout({ children }: { children: ReactNode }) {
           </div>
         </div>
       </main>
+
+      {/* Pop-up Notification (Toast) */}
+      {toast && (
+        <div className="fixed bottom-8 right-8 z-[100] animate-in slide-in-from-bottom-5 fade-in duration-300">
+          <div 
+            onClick={() => markAsRead(toast.id, toast.formId, toast.message)}
+            className="bg-white border border-slate-200 shadow-2xl shadow-blue-900/20 rounded-2xl p-4 pr-12 flex items-start gap-4 max-w-sm cursor-pointer hover:bg-slate-50 transition-colors relative"
+          >
+            <div className="bg-blue-100 p-2 rounded-full flex-shrink-0 mt-1">
+              {toast.message.includes('New message') ? <MessageSquare className="w-5 h-5 text-blue-600" /> : <Bell className="w-5 h-5 text-blue-600" />}
+            </div>
+            <div>
+              <h4 className="text-sm font-bold text-slate-900">{toast.message.includes('New message') ? 'New Chat Message' : 'New Notification'}</h4>
+              <p className="text-sm text-slate-600 mt-1 line-clamp-2">{toast.message}</p>
+              <span className="text-[10px] font-bold text-blue-600 uppercase mt-2 block">Click to view</span>
+            </div>
+            <button 
+              onClick={(e) => { e.stopPropagation(); setToast(null); }}
+              className="absolute top-4 right-4 text-slate-400 hover:text-slate-600 p-1"
+            >
+              <X className="w-4 h-4" />
+            </button>
+          </div>
+        </div>
+      )}
     </div>
   );
 }

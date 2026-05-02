@@ -6,6 +6,7 @@ import { useAuth } from '../context/AuthContext';
 import { format } from 'date-fns';
 import { motion, AnimatePresence } from 'motion/react';
 import { 
+  MessageCircle,
   FileText, 
   Clock, 
   CheckCircle2, 
@@ -33,6 +34,20 @@ export default function Dashboard() {
   const [filterPlant, setFilterPlant] = useState('all');
   const [sortBy, setSortBy] = useState('newest');
   const [searchQuery, setSearchQuery] = useState('');
+  const [notifications, setNotifications] = useState<any[]>([]);
+
+  useEffect(() => {
+    // Fetch notifications to check for unread chat
+    fetch(`${API_BASE_URL}/api/notifications`)
+      .then(res => res.json())
+      .then(setNotifications)
+      .catch(console.error);
+      
+    const intv = setInterval(() => {
+      fetch(`${API_BASE_URL}/api/notifications`).then(res => res.json()).then(setNotifications).catch(console.error);
+    }, 5000);
+    return () => clearInterval(intv);
+  }, []);
 
   const plants = ['Plant Cikupa', 'Plant Cikokol', 'Plant Semarang'];
 
@@ -307,15 +322,22 @@ export default function Dashboard() {
                 </thead>
                 <tbody className="divide-y divide-slate-100">
                   {filteredAndSortedForms.map((form) => (
-                    <motion.tr 
+<motion.tr 
                       key={form.id}
                       variants={itemVariants}
                       className="hover:bg-slate-50/50 transition-colors group"
                     >
                       <td className="px-6 py-4">
-                        <span className="text-sm font-mono font-bold text-slate-900">
-                          {form.document_no || 'N/A'}
-                        </span>
+                        <div className="flex flex-col gap-1">
+                          <span className="text-sm font-mono font-bold text-slate-900">
+                            {form.document_no || 'N/A'}
+                          </span>
+                          {notifications.some(n => !n.is_read && n.form_id === form.id && n.message.includes('New message')) && (
+                            <span className="inline-flex items-center gap-1 text-[10px] font-bold bg-blue-100 text-blue-700 px-2 py-0.5 rounded-full w-fit animate-pulse shadow-sm shadow-blue-200">
+                              <MessageCircle className="w-3 h-3" /> New Chat
+                            </span>
+                          )}
+                        </div>
                       </td>
                       <td className="px-6 py-4">
                         <div className="flex items-center gap-3">

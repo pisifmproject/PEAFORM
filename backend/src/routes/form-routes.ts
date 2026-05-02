@@ -50,5 +50,6 @@ router.get('/', authenticate, formController.getForms);
 router.get('/:id', authenticate, formController.getFormById);
 router.get('/:id/pdf', authenticate, pdfController.downloadFormPDF);
 router.post('/:id/approve', authenticate, formController.approveForm);
+router.post('/:id/qna', authenticate, formController.createFormQnA);
 
 export default router;

@@ -131,8 +131,9 @@ export const getFormById = async (req: AuthRequest, res: Response) => {
     }
 
     const approvals = await formService.getFormApprovals(req.params.id);
+    const qna = await formService.getFormQnA(req.params.id);
 
-    res.json({ form, approvals });
+    res.json({ form, approvals, qna });
   } catch (error: any) {
     console.error('Get form by id error:', error);
     res.status(500).json({ error: error.message });
@@ -279,6 +280,68 @@ export const approveForm = async (req: AuthRequest, res: Response) => {
     res.json({ success: true });
   } catch (error: any) {
     console.error('Approve form error:', error);
+    res.status(500).json({ error: error.message });
+  }
+};
+
+export const createFormQnA = async (req: AuthRequest, res: Response) => {
+  try {
+    const { message } = req.body;
+    
+    // Check if form exists
+    const form = await formService.getFormById(req.params.id);
+    if (!form) {
+      return res.status(404).json({ error: 'Form not found' });
+    }
+
+    // Insert QnA
+    const qna = await formService.createFormQnA({
+      form_id: req.params.id,
+      sender_id: req.user!.id,
+      message,
+    });
+
+    // Determine target users to notify (past approvers and applicant)
+    const notifyUserIds = new Set<string>();
+    if (req.user!.id !== form.applicant_id) {
+      notifyUserIds.add(form.applicant_id);
+    }
+    
+    const approvals = await formService.getFormApprovals(form.id);
+    approvals.forEach((app: any) => {
+      if (app.approver_id !== req.user!.id) notifyUserIds.add(app.approver_id);
+    });
+
+    const notifMessage = `New message in PEAF (${form.document_no}): "${message.substring(0, 30)}${message.length > 30 ? '...' : ''}"`;
+
+    for (const userId of notifyUserIds) {
+      await notificationService.createNotification({
+        user_id: userId,
+        message: notifMessage,
+        form_id: form.id,
+      });
+    }
+
+    // Notify current pending role
+    let pendingRole = '';
+    if (form.status === 'pending_hse') pendingRole = 'hse';
+    else if (form.status === 'pending_engineering_manager') pendingRole = 'engineering_manager';
+    else if (form.status === 'pending_hod') pendingRole = 'hod';
+    else if (form.status === 'pending_factory_manager') pendingRole = 'factory_manager';
+
+    if (pendingRole && req.user!.role !== pendingRole) {
+      await notificationService.notifyApprovers(
+        pendingRole,
+        form.plant_location,
+        notifMessage,
+        form.id
+      );
+    }
+
+    
+    res.json({ success: true, qna });
+  } catch (error: any) {
+    console.error('Create QnA error:', error);
     res.status(500).json({ error: error.message });
   }
 };

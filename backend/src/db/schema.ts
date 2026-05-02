@@ -69,3 +69,12 @@ export const pending_registrations = pgTable('pending_registrations', {
   status: varchar('status', { length: 50 }).notNull().default('pending'),
   created_at: timestamp('created_at').defaultNow().notNull(),
 });
+
+export const peaf_qna = pgTable('peaf_qna', {
+  id: uuid('id').primaryKey().defaultRandom(),
+  form_id: uuid('form_id').notNull().references(() => peaf_forms.id, { onDelete: 'cascade' }),
+  sender_id: uuid('sender_id').notNull().references(() => users.id, { onDelete: 'cascade' }),
+  message: text('message').notNull(),
+  created_at: timestamp('created_at').defaultNow().notNull(),
+});
+

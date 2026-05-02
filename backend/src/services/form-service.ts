@@ -1,6 +1,6 @@
 import { eq, desc, and, gte, lt, sql, or, isNull } from 'drizzle-orm';
 import { db } from '../db/index.js';
-import { peaf_forms, peaf_approvals, users } from '../db/schema.js';
+import { peaf_forms, peaf_approvals, users, peaf_qna } from '../db/schema.js';
 import { toRoman } from '../config/roman-numerals.js';
 
 // HOD dengan dept ini handle semua 3 plant, tidak perlu plant assignment
@@ -210,4 +210,32 @@ export const updateFormDocuments = async (id: string, documents: any[]) => {
     .returning();
 
   return form;
+};
+
+export const getFormQnA = async (form_id: string) => {
+  const qnaList = await db
+    .select({
+      id: peaf_qna.id,
+      form_id: peaf_qna.form_id,
+      sender_id: peaf_qna.sender_id,
+      message: peaf_qna.message,
+      created_at: peaf_qna.created_at,
+      sender_name: users.name,
+      sender_role: users.role,
+    })
+    .from(peaf_qna)
+    .leftJoin(users, eq(peaf_qna.sender_id, users.id))
+    .where(eq(peaf_qna.form_id, form_id))
+    .orderBy(peaf_qna.created_at);
+
+  return qnaList;
+};
+
+export const createFormQnA = async (data: {
+  form_id: string;
+  sender_id: string;
+  message: string;
+}) => {
+  const [qna] = await db.insert(peaf_qna).values(data).returning();
+  return qna;
 };
