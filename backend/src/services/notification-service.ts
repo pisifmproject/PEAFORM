@@ -72,4 +72,6 @@ export const notifyApprovers = async (role: string, plant_location: string, mess
       form_id,
     });
   }
+
+  return approvers;
 };

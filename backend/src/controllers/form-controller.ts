@@ -3,6 +3,7 @@ import { AuthRequest } from '../middleware/authenticate.js';
 import * as formService from '../services/form-service.js';
 import * as userService from '../services/user-service.js';
 import * as notificationService from '../services/notification-service.js';
+import * as emailService from '../services/email-service.js';
 import { renameUploadedFile } from '../config/upload.js';
 
 // HOD dengan dept ini handle semua 3 plant
@@ -77,12 +78,29 @@ export const createForm = async (req: AuthRequest, res: Response) => {
     await formService.updateFormDocuments(form.id, renamedDocuments);
 
     // Notify HSE at the same plant
-    await notificationService.notifyApprovers(
+    const approvers = await notificationService.notifyApprovers(
       'hse',
       plant_location,
       `New PEAF request requires your approval (${form.document_no})`,
       form.id
     );
+
+    const workCategoryStr = Array.isArray(form.work_category) ? form.work_category.join(', ') : String(form.work_category);
+
+    for (const approver of approvers) {
+      if (approver.email) {
+        await emailService.sendApprovalRequestEmail({
+          approverEmail: approver.email,
+          approverName: approver.name,
+          applicantName: form.applicant_name,
+          documentNo: form.document_no,
+          formId: form.id,
+          plantLocation: form.plant_location,
+          workCategory: workCategoryStr,
+          projectDescription: form.project_description
+        }).catch(err => console.error('Failed to send approval request email:', err));
+      }
+    }
 
     res.json({ success: true, id: form.id, document_no: form.document_no });
   } catch (error: any) {
@@ -212,6 +230,19 @@ export const approveForm = async (req: AuthRequest, res: Response) => {
         message: `Your PEAF request (${form.document_no}) was rejected by ${user.name}.`,
         form_id: form.id,
       });
+
+      const applicant = await userService.findUserById(form.applicant_id);
+      if (applicant && applicant.email) {
+        await emailService.sendStatusUpdateEmail({
+          applicantEmail: applicant.email,
+          applicantName: applicant.name,
+          documentNo: form.document_no,
+          formId: form.id,
+          status: 'Rejected',
+          approverName: user.name,
+          notes: notes || ''
+        }).catch(err => console.error('Failed to send status update email:', err));
+      }
     } else if (status === 'Approved' || status === 'Approved with Conditions') {
       const current_status = form.status;
 
@@ -263,17 +294,61 @@ export const approveForm = async (req: AuthRequest, res: Response) => {
           message: `Your PEAF request (${form.document_no}) is fully approved!`,
           form_id: form.id,
         });
+
+        const applicant = await userService.findUserById(form.applicant_id);
+        if (applicant && applicant.email) {
+          await emailService.sendStatusUpdateEmail({
+            applicantEmail: applicant.email,
+            applicantName: applicant.name,
+            documentNo: form.document_no,
+            formId: form.id,
+            status: 'Fully Approved',
+            approverName: user.name,
+            notes: notes || ''
+          }).catch(err => console.error('Failed to send status update email:', err));
+        }
       }
 
       await formService.updateFormStatus(form.id, new_status);
 
       if (next_role) {
-        await notificationService.notifyApprovers(
+        const nextApprovers = await notificationService.notifyApprovers(
           next_role,
           form.plant_location,
           `New PEAF request requires your approval (${form.document_no})`,
           form.id
         );
+
+        const workCategoryStr = Array.isArray(form.work_category) ? form.work_category.join(', ') : String(form.work_category);
+        for (const approver of nextApprovers) {
+          if (approver.email) {
+            await emailService.sendApprovalRequestEmail({
+              approverEmail: approver.email,
+              approverName: approver.name,
+              applicantName: form.applicant_name,
+              documentNo: form.document_no,
+              formId: form.id,
+              plantLocation: form.plant_location,
+              workCategory: workCategoryStr,
+              projectDescription: form.project_description
+            }).catch(err => console.error('Failed to send approval request email:', err));
+          }
+        }
+      }
+
+      if (new_status !== 'approved') {
+        const applicant = await userService.findUserById(form.applicant_id);
+        if (applicant && applicant.email) {
+          await emailService.sendStatusUpdateEmail({
+            applicantEmail: applicant.email,
+            applicantName: applicant.name,
+            documentNo: form.document_no,
+            formId: form.id,
+            status: status, // Approved or Approved with Conditions
+            approverName: user.name,
+            notes: notes || ''
+          }).catch(err => console.error('Failed to send status update email:', err));
+        }
       }
     }
 
