@@ -3,6 +3,7 @@ import React, { useState } from 'react';
 import { useNavigate } from 'react-router-dom';
 import Layout from '../components/Layout';
 import { useAuth } from '../context/AuthContext';
+import SuccessNotification from '../components/SuccessNotification';
 import { motion, AnimatePresence } from 'motion/react';
 import { 
   FileText, 
@@ -85,6 +86,8 @@ export default function CreateRequest() {
   const [otherWorkCategory, setOtherWorkCategory] = useState('');
 
   const [showConfirmModal, setShowConfirmModal] = useState(false);
+  const [showSuccessNotification, setShowSuccessNotification] = useState(false);
+  const [submittedDocumentNo, setSubmittedDocumentNo] = useState('');
   const [selectedDocTypes, setSelectedDocTypes] = useState<string[]>([]);
   const [departments, setDepartments] = useState<any[]>([]);
 
@@ -239,7 +242,17 @@ export default function CreateRequest() {
         throw new Error(data.error || 'Failed to submit form');
       }
 
-      navigate('/dashboard');
+      const result = await res.json();
+      
+      // Show success notification
+      setSubmittedDocumentNo(result.document_no || 'N/A');
+      setShowSuccessNotification(true);
+      
+      // Navigate to dashboard after notification auto-closes (or user closes it)
+      setTimeout(() => {
+        navigate('/dashboard');
+      }, 5500); // Slightly longer than auto-close delay
+      
     } catch (err: any) {
       setError(err.message);
     } finally {
@@ -309,15 +322,38 @@ export default function CreateRequest() {
               <h2 className="font-bold text-slate-800">I. APPLICANT INFORMATION</h2>
             </div>
             <div className="p-6 grid grid-cols-1 md:grid-cols-2 gap-6">
+              {/* Applicant Name - Read-only, auto-filled from profile */}
               <div className="space-y-1.5">
-                <label className="text-xs font-bold text-slate-500 uppercase tracking-wider">Applicant Name</label>
-                <input
-                  type="text"
-                  required
-                  value={formData.applicant_name}
-                  onChange={e => setFormData({...formData, applicant_name: e.target.value})}
-                  className="w-full px-4 py-2.5 bg-slate-50 border border-slate-200 rounded-xl focus:ring-2 focus:ring-blue-500 focus:border-blue-500 outline-none transition-all text-slate-900 font-medium"
-                />
+                <label className="text-xs font-bold text-slate-500 uppercase tracking-wider flex items-center gap-2">
+                  Applicant Name
+                  <span className="inline-flex items-center gap-1 px-2 py-0.5 bg-blue-50 text-blue-600 text-[10px] font-bold rounded-full">
+                    <svg className="h-3 w-3" fill="none" viewBox="0 0 24 24" stroke="currentColor">
+                      <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M12 15v2m-6 4h12a2 2 0 002-2v-6a2 2 0 00-2-2H6a2 2 0 00-2 2v6a2 2 0 002 2zm10-10V7a4 4 0 00-8 0v4h8z" />
+                    </svg>
+                    AUTO
+                  </span>
+                </label>
+                <div className="relative">
+                  <input
+                    type="text"
+                    required
+                    value={formData.applicant_name}
+                    readOnly
+                    disabled
+                    className="w-full px-4 py-2.5 bg-slate-100 border border-slate-200 rounded-xl text-slate-700 font-medium cursor-not-allowed"
+                  />
+                  <div className="absolute inset-y-0 right-0 pr-4 flex items-center pointer-events-none">
+                    <svg className="h-4 w-4 text-slate-400" fill="none" viewBox="0 0 24 24" stroke="currentColor">
+                      <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M12 15v2m-6 4h12a2 2 0 002-2v-6a2 2 0 00-2-2H6a2 2 0 00-2 2v6a2 2 0 002 2zm10-10V7a4 4 0 00-8 0v4h8z" />
+                    </svg>
+                  </div>
+                </div>
+                <p className="text-xs text-slate-400 italic flex items-center gap-1">
+                  <svg className="h-3 w-3" fill="currentColor" viewBox="0 0 20 20">
+                    <path fillRule="evenodd" d="M18 10a8 8 0 11-16 0 8 8 0 0116 0zm-7-4a1 1 0 11-2 0 1 1 0 012 0zM9 9a1 1 0 000 2v3a1 1 0 001 1h1a1 1 0 100-2v-3a1 1 0 00-1-1H9z" clipRule="evenodd" />
+                  </svg>
+                  Auto-filled from your profile
+                </p>
               </div>
               <div className="space-y-1.5">
                 <label className="text-xs font-bold text-slate-500 uppercase tracking-wider">Department</label>
@@ -673,6 +709,18 @@ export default function CreateRequest() {
           </div>
         )}
       </AnimatePresence>
+
+      {/* Success Notification */}
+      <SuccessNotification
+        show={showSuccessNotification}
+        onClose={() => setShowSuccessNotification(false)}
+        title="Request Submitted Successfully"
+        message="Your PEAF request has been submitted and is now pending approval."
+        documentNo={submittedDocumentNo}
+        autoClose={true}
+        autoCloseDelay={5000}
+        // onViewDetails={() => navigate('/dashboard')} // Commented out - not used yet
+      />
     </Layout>
   );
 }
