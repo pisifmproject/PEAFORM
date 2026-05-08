@@ -65,11 +65,14 @@ export const login = async (req: AuthRequest, res: Response) => {
       expiresIn: '24h',
     });
 
+    // Determine cookie path based on environment
+    const cookiePath = process.env.COOKIE_PATH || '/';
+    
     res.cookie('token', token, {
       httpOnly: true,
-      secure: false, // Set to false for HTTP connections
+      secure: false, // Keep false for HTTP (Apache handles HTTPS if needed)
       sameSite: 'lax',
-      path: '/',
+      path: cookiePath, // Use environment variable for path
       maxAge: 24 * 60 * 60 * 1000, // 24 hours
     });
 
@@ -83,7 +86,8 @@ export const login = async (req: AuthRequest, res: Response) => {
 };
 
 export const logout = async (req: AuthRequest, res: Response) => {
-  res.clearCookie('token', { path: '/' });
+  const cookiePath = process.env.COOKIE_PATH || '/';
+  res.clearCookie('token', { path: cookiePath });
   res.json({ success: true });
 };
 

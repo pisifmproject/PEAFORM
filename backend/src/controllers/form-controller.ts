@@ -29,9 +29,19 @@ export const createForm = async (req: AuthRequest, res: Response) => {
       purchasing_status,
     } = req.body;
 
+    // Get current user to ensure applicant_name matches
+    const currentUser = await userService.findUserById(req.user!.id);
+    if (!currentUser) {
+      return res.status(404).json({ error: 'User not found' });
+    }
+
+    // Use the logged-in user's name as applicant_name (ignore client-provided value)
+    // This ensures data integrity and prevents spoofing
+    const validatedApplicantName = currentUser.name;
+
     const form = await formService.createForm({
       applicant_id: req.user!.id,
-      applicant_name,
+      applicant_name: validatedApplicantName, // Use validated name from database
       department,
       plant_location,
       submission_date: new Date(submission_date),
@@ -85,23 +95,29 @@ export const createForm = async (req: AuthRequest, res: Response) => {
       form.id
     );
 
+    // Send emails asynchronously (fire-and-forget) to avoid blocking the response
+    // This significantly improves response time
     const workCategoryStr = Array.isArray(form.work_category) ? form.work_category.join(', ') : String(form.work_category);
+    
+    // Don't await - send emails in background
+    Promise.all(
+      approvers
+        .filter(approver => approver.email)
+        .map(approver => 
+          emailService.sendApprovalRequestEmail({
+            approverEmail: approver.email,
+            approverName: approver.name,
+            applicantName: form.applicant_name,
+            documentNo: form.document_no,
+            formId: form.id,
+            plantLocation: form.plant_location,
+            workCategory: workCategoryStr,
+            projectDescription: form.project_description
+          }).catch(err => console.error('Failed to send approval request email:', err))
+        )
+    ).catch(err => console.error('Error sending approval emails:', err));
 
-    for (const approver of approvers) {
-      if (approver.email) {
-        await emailService.sendApprovalRequestEmail({
-          approverEmail: approver.email,
-          approverName: approver.name,
-          applicantName: form.applicant_name,
-          documentNo: form.document_no,
-          formId: form.id,
-          plantLocation: form.plant_location,
-          workCategory: workCategoryStr,
-          projectDescription: form.project_description
-        }).catch(err => console.error('Failed to send approval request email:', err));
-      }
-    }
-
+    // Return response immediately without waiting for emails
     res.json({ success: true, id: form.id, document_no: form.document_no });
   } catch (error: any) {
     console.error('Create form error:', error);
@@ -233,7 +249,8 @@ export const approveForm = async (req: AuthRequest, res: Response) => {
 
       const applicant = await userService.findUserById(form.applicant_id);
       if (applicant && applicant.email) {
-        await emailService.sendStatusUpdateEmail({
+        // Send email asynchronously (fire-and-forget)
+        emailService.sendStatusUpdateEmail({
           applicantEmail: applicant.email,
           applicantName: applicant.name,
           documentNo: form.document_no,
@@ -297,7 +314,8 @@ export const approveForm = async (req: AuthRequest, res: Response) => {
 
         const applicant = await userService.findUserById(form.applicant_id);
         if (applicant && applicant.email) {
-          await emailService.sendStatusUpdateEmail({
+          // Send email asynchronously (fire-and-forget)
+          emailService.sendStatusUpdateEmail({
             applicantEmail: applicant.email,
             applicantName: applicant.name,
             documentNo: form.document_no,
@@ -319,27 +337,31 @@ export const approveForm = async (req: AuthRequest, res: Response) => {
           form.id
         );
 
+        // Send emails asynchronously (fire-and-forget)
         const workCategoryStr = Array.isArray(form.work_category) ? form.work_category.join(', ') : String(form.work_category);
-        for (const approver of nextApprovers) {
-          if (approver.email) {
-            await emailService.sendApprovalRequestEmail({
-              approverEmail: approver.email,
-              approverName: approver.name,
-              applicantName: form.applicant_name,
-              documentNo: form.document_no,
-              formId: form.id,
-              plantLocation: form.plant_location,
-              workCategory: workCategoryStr,
-              projectDescription: form.project_description
-            }).catch(err => console.error('Failed to send approval request email:', err));
-          }
-        }
+        Promise.all(
+          nextApprovers
+            .filter(approver => approver.email)
+            .map(approver =>
+              emailService.sendApprovalRequestEmail({
+                approverEmail: approver.email,
+                approverName: approver.name,
+                applicantName: form.applicant_name,
+                documentNo: form.document_no,
+                formId: form.id,
+                plantLocation: form.plant_location,
+                workCategory: workCategoryStr,
+                projectDescription: form.project_description
+              }).catch(err => console.error('Failed to send approval request email:', err))
+            )
+        ).catch(err => console.error('Error sending approval emails:', err));
       }
 
       if (new_status !== 'approved') {
         const applicant = await userService.findUserById(form.applicant_id);
         if (applicant && applicant.email) {
-          await emailService.sendStatusUpdateEmail({
+          // Send email asynchronously (fire-and-forget)
+          emailService.sendStatusUpdateEmail({
             applicantEmail: applicant.email,
             applicantName: applicant.name,
             documentNo: form.document_no,

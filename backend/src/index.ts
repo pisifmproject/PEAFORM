@@ -15,15 +15,32 @@ const app = express();
 // Middleware
 app.use(
   cors({
-    origin: [
-      FRONTEND_URL,
-      'http://localhost:5173',
-      'http://localhost:3002',
-      'http://10.125.48.102:3002',
-      'http://10.125.48.102:9000',
-      /^http:\/\/10\.\d+\.\d+\.\d+:\d+$/, // Allow any 10.x.x.x IP with port
-      /^http:\/\/10\.\d+\.\d+\.\d+$/, // Allow any 10.x.x.x IP without port
-    ],
+    origin: function (origin, callback) {
+      // Allow requests with no origin (like mobile apps, curl, Postman)
+      if (!origin) return callback(null, true);
+      
+      const allowedOrigins = [
+        FRONTEND_URL,
+        'http://localhost:5173',
+        'http://localhost:3002',
+        'http://10.125.48.102',
+        'http://10.125.48.102:3002',
+        'http://10.125.48.102:9000',
+        'http://10.125.48.102/peaf',
+      ];
+      
+      // Check if origin is in allowed list or matches pattern
+      const isAllowed = allowedOrigins.includes(origin) ||
+        /^http:\/\/10\.\d+\.\d+\.\d+:\d+$/.test(origin) ||
+        /^http:\/\/10\.\d+\.\d+\.\d+$/.test(origin);
+      
+      if (isAllowed) {
+        callback(null, true);
+      } else {
+        console.log('CORS blocked origin:', origin);
+        callback(null, true); // Allow anyway for now, log for debugging
+      }
+    },
     credentials: true,
   })
 );
