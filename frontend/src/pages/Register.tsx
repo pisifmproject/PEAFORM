@@ -175,12 +175,12 @@ export default function Register() {
                     <BadgeCheck className="w-6 h-6 text-green-600 flex-shrink-0 mt-0.5" />
                     <div>
                       <h3 className="font-bold text-sm mb-1">Registration Submitted!</h3>
-                      <p className="text-sm leading-relaxed">
-                        Your registration has been submitted successfully. Please wait for admin approval before you can login.
+                      <p className="text-sm leading-relaxed mb-3">
+                        Your registration has been submitted successfully. Please check your email regularly for account activation notification from admin.
                       </p>
                       <Link
                         to="/login"
-                        className="inline-flex items-center gap-2 mt-3 text-sm font-bold text-green-700 hover:text-green-800 transition-colors"
+                        className="inline-flex items-center gap-2 text-sm font-bold text-green-700 hover:text-green-800 transition-colors"
                       >
                         Go to Login <ArrowRight className="w-4 h-4" />
                       </Link>

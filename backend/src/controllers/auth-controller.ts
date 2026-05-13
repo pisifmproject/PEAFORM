@@ -23,17 +23,18 @@ export const register = async (req: AuthRequest, res: Response) => {
     // Create pending registration instead of direct user creation
     const pending = await userService.createPendingRegistration({ nik, username, email, name, password });
 
-    // Notify all admins (in-app + email)
-    await userService.notifyAdminsOfNewRegistration(name, {
+    // Notify all admins (in-app + email) - Fire-and-forget for faster response
+    userService.notifyAdminsOfNewRegistration(name, {
       nik,
       email,
       username,
       registrationId: pending.id,
-    });
+    }).catch(err => console.error('Failed to notify admins:', err));
 
+    // Return response immediately without waiting for notifications
     res.json({ 
       success: true, 
-      message: 'Registration submitted successfully. Please wait for admin approval.' 
+      message: 'Registration submitted successfully. Please check your email regularly for account activation notification.' 
     });
   } catch (error: any) {
     console.error('Register error:', error);

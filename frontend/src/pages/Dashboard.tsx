@@ -55,7 +55,7 @@ export default function Dashboard() {
     fetch(`${API_BASE_URL}/api/forms`, { credentials: 'include' })
       .then(res => {
         if (res.status === 401) {
-          window.location.href = '/login';
+          window.location.href = import.meta.env.BASE_URL + 'login';
           return;
         }
         return res.json();

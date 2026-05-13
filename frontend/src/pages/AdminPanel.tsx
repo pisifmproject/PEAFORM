@@ -60,7 +60,7 @@ export default function AdminPanel() {
     try {
       const res = await fetch(`${API_BASE_URL}/api/users`, { credentials: "include" });
       if (res.status === 401) {
-        window.location.href = "/login";
+        window.location.href = import.meta.env.BASE_URL + 'login';
         return;
       }
       if (!res.ok) throw new Error("Failed to fetch users");
@@ -160,7 +160,7 @@ export default function AdminPanel() {
         credentials: "include",
       });
       if (res.status === 401) {
-        window.location.href = "/login";
+        window.location.href = import.meta.env.BASE_URL + 'login';
         return;
       }
       if (!res.ok) throw new Error("Failed to update role");
@@ -182,7 +182,7 @@ export default function AdminPanel() {
         credentials: "include",
       });
       if (res.status === 401) {
-        window.location.href = "/login";
+        window.location.href = import.meta.env.BASE_URL + 'login';
         return;
       }
       if (!res.ok) throw new Error("Failed to update plant");
@@ -204,7 +204,7 @@ export default function AdminPanel() {
         credentials: "include",
       });
       if (res.status === 401) {
-        window.location.href = "/login";
+        window.location.href = import.meta.env.BASE_URL + 'login';
         return;
       }
       if (!res.ok) throw new Error("Failed to update department");
@@ -231,7 +231,7 @@ export default function AdminPanel() {
         credentials: "include",
       });
       if (res.status === 401) {
-        window.location.href = "/login";
+        window.location.href = import.meta.env.BASE_URL + 'login';
         return;
       }
       if (!res.ok) {

@@ -52,7 +52,7 @@ const TECHNICAL_IMPACTS = [
 const SUPPORTING_DOCUMENTS = [
   'Technical Drawings (Layout / P&ID / Single Line Diagram)',
   'Equipment Datasheet / Specification',
-  'Vendor Quotation (Minimum 2-3 suppliers if applicable)',
+  'Vendor Quotation',
   'Technical Comparison Sheet (for vendor selection)',
   'Job Safety Analysis (JSA) / Risk Assessment',
   'Project Timeline (Schedule / Gantt Chart)',
@@ -60,6 +60,13 @@ const SUPPORTING_DOCUMENTS = [
   'Cost Breakdown (CAPEX / OPEX estimation)',
   'Method Statement / Installation Procedure',
   'Layout Marking / Area Impact Sketch'
+];
+
+const REQUIRED_DOCUMENTS = [
+  'Project Timeline (Schedule / Gantt Chart)',
+  'Job Safety Analysis (JSA) / Risk Assessment',
+  'Technical Drawings (Layout / P&ID / Single Line Diagram)',
+  'Vendor Quotation'
 ];
 
 export default function CreateRequest() {
@@ -204,6 +211,19 @@ export default function CreateRequest() {
 
   const handleSubmitClick = (e: React.FormEvent) => {
     e.preventDefault();
+
+    // Validate required documents
+    const missingDocs = REQUIRED_DOCUMENTS.filter(doc => {
+      const files = formData.supporting_documents[doc];
+      return !files || files.length === 0;
+    });
+
+    if (missingDocs.length > 0) {
+      setError(`The following documents are mandatory and must be uploaded: ${missingDocs.join(', ')}`);
+      window.scrollTo({ top: 0, behavior: 'smooth' });
+      return;
+    }
+
     setShowConfirmModal(true);
   };
 
@@ -480,9 +500,10 @@ export default function CreateRequest() {
               <h2 className="font-bold text-slate-800">IV. REQUIRED SUPPORTING DOCUMENTS</h2>
             </div>
             <div className="p-6">
-              <p className="text-sm text-slate-500 italic mb-4">All documents must be attached :</p>
+              <p className="text-sm text-slate-500 italic mb-4"><span className="text-red-500 font-bold">*</span> This field is required</p>
               <div className="grid grid-cols-1 gap-4">
                 {SUPPORTING_DOCUMENTS.map((doc) => {
+                  const isRequired = REQUIRED_DOCUMENTS.includes(doc);
                   const isChecked = selectedDocTypes.includes(doc);
                   const files = formData.supporting_documents[doc] || [];
                   const isUploading = uploadingDoc === doc;
@@ -496,7 +517,10 @@ export default function CreateRequest() {
                           onChange={() => handleDocTypeToggle(doc)}
                           className="h-5 w-5 rounded-md border-slate-300 text-amber-600 focus:ring-amber-500 transition-all"
                         />
-                        <span className="text-sm font-medium text-slate-700 group-hover:text-slate-900 transition-colors">{doc}</span>
+                        <span className="text-sm font-medium text-slate-700 group-hover:text-slate-900 transition-colors">
+                          {doc}
+                          {isRequired && <span className="text-red-500 ml-1" title="Required">*</span>}
+                        </span>
                       </label>
                       
                       <AnimatePresence>
