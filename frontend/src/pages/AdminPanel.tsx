@@ -2,6 +2,7 @@ import { API_BASE_URL } from '../lib/api';
 import React, { useState, useEffect, useMemo } from "react";
 import Layout from "../components/Layout";
 import { useAuth } from "../context/AuthContext";
+import { useToast } from "../hooks/useToast";
 import { motion, AnimatePresence } from "motion/react";
 import {
   Users,
@@ -42,6 +43,7 @@ const ROLE_DISPLAY_NAMES: Record<string, string> = {
 
 export default function AdminPanel() {
   const { user } = useAuth();
+  const { showToast } = useToast();
   const [users, setUsers] = useState<any[]>([]);
   const [pendingRegistrations, setPendingRegistrations] = useState<any[]>([]);
   const [loading, setLoading] = useState(true);
@@ -110,8 +112,9 @@ export default function AdminPanel() {
       const data = await res.json();
       setDepartments([...departments, data.department]);
       setNewDepartmentName("");
+      showToast("Department created successfully", "success");
     } catch (err: any) {
-      alert(err.message);
+      showToast(err.message, "error");
     }
   };
 
@@ -124,8 +127,9 @@ export default function AdminPanel() {
       });
       if (!res.ok) throw new Error("Failed to delete department");
       setDepartments(departments.filter((d) => d.id !== id));
+      showToast(`Department "${name}" deleted successfully`, "success");
     } catch (err: any) {
-      alert(err.message);
+      showToast(err.message, "error");
     }
   };
 
@@ -168,8 +172,9 @@ export default function AdminPanel() {
       setUsers(
         users.map((u) => (u.id === userId ? { ...u, role: newRole } : u)),
       );
+      showToast("User role updated successfully", "success");
     } catch (err: any) {
-      alert(err.message);
+      showToast(err.message, "error");
     }
   };
 
@@ -190,8 +195,9 @@ export default function AdminPanel() {
       setUsers(
         users.map((u) => (u.id === userId ? { ...u, plant: newPlant } : u)),
       );
+      showToast("Plant assignment updated successfully", "success");
     } catch (err: any) {
-      alert(err.message);
+      showToast(err.message, "error");
     }
   };
 
@@ -212,8 +218,9 @@ export default function AdminPanel() {
       setUsers(
         users.map((u) => (u.id === userId ? { ...u, department: newDept } : u)),
       );
+      showToast("Department assignment updated successfully", "success");
     } catch (err: any) {
-      alert(err.message);
+      showToast(err.message, "error");
     }
   };
 
@@ -240,8 +247,9 @@ export default function AdminPanel() {
       }
 
       setUsers(users.filter((u) => u.id !== userId));
+      showToast(`User "${userName}" deleted successfully`, "success");
     } catch (err: any) {
-      alert(err.message);
+      showToast(err.message, "error");
     }
   };
 
@@ -257,9 +265,9 @@ export default function AdminPanel() {
 
       setPendingRegistrations(pendingRegistrations.filter((p) => p.id !== id));
       fetchUsers(); // Refresh user list
-      alert(`Registration for ${name} approved successfully!`);
+      showToast(`Registration for ${name} approved successfully!`, "success");
     } catch (err: any) {
-      alert(err.message);
+      showToast(err.message, "error");
     }
   };
 
@@ -274,9 +282,9 @@ export default function AdminPanel() {
       if (!res.ok) throw new Error("Failed to reject registration");
 
       setPendingRegistrations(pendingRegistrations.filter((p) => p.id !== id));
-      alert(`Registration for ${name} rejected.`);
+      showToast(`Registration for ${name} rejected.`, "info");
     } catch (err: any) {
-      alert(err.message);
+      showToast(err.message, "error");
     }
   };
 
