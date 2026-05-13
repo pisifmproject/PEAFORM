@@ -3,6 +3,7 @@ import React, { useState, useEffect, useMemo } from "react";
 import Layout from "../components/Layout";
 import { useAuth } from "../context/AuthContext";
 import { useToast } from "../hooks/useToast";
+import ConfirmModal from "../components/ConfirmModal";
 import { motion, AnimatePresence } from "motion/react";
 import {
   Users,
@@ -51,6 +52,22 @@ export default function AdminPanel() {
   const [searchQuery, setSearchQuery] = useState("");
   const [departments, setDepartments] = useState<any[]>([]);
   const [newDepartmentName, setNewDepartmentName] = useState("");
+  
+  // Confirm modal state
+  const [confirmModal, setConfirmModal] = useState<{
+    show: boolean;
+    title: string;
+    message: string;
+    onConfirm: () => void;
+    type?: 'danger' | 'warning' | 'info' | 'success';
+    confirmText?: string;
+  }>({
+    show: false,
+    title: '',
+    message: '',
+    onConfirm: () => {},
+    type: 'warning'
+  });
 
   useEffect(() => {
     fetchUsers();
@@ -118,19 +135,27 @@ export default function AdminPanel() {
     }
   };
 
-  const handleDeleteDepartment = async (id: string, name: string) => {
-    if (!confirm(`Are you sure you want to delete department "${name}"?`)) return;
-    try {
-      const res = await fetch(`${API_BASE_URL}/api/departments/${id}`, {
-        method: "DELETE",
-        credentials: "include",
-      });
-      if (!res.ok) throw new Error("Failed to delete department");
-      setDepartments(departments.filter((d) => d.id !== id));
-      showToast(`Department "${name}" deleted successfully`, "success");
-    } catch (err: any) {
-      showToast(err.message, "error");
-    }
+  const handleDeleteDepartment = (id: string, name: string) => {
+    setConfirmModal({
+      show: true,
+      title: 'Delete Department',
+      message: `Are you sure you want to delete department "${name}"? This action cannot be undone.`,
+      type: 'danger',
+      confirmText: 'Yes, Delete',
+      onConfirm: async () => {
+        try {
+          const res = await fetch(`${API_BASE_URL}/api/departments/${id}`, {
+            method: "DELETE",
+            credentials: "include",
+          });
+          if (!res.ok) throw new Error("Failed to delete department");
+          setDepartments(departments.filter((d) => d.id !== id));
+          showToast(`Department "${name}" deleted successfully`, "success");
+        } catch (err: any) {
+          showToast(err.message, "error");
+        }
+      }
+    });
   };
 
   const stats = useMemo(() => {
@@ -224,68 +249,84 @@ export default function AdminPanel() {
     }
   };
 
-  const handleDeleteUser = async (userId: string, userName: string) => {
-    if (
-      !confirm(
-        `Are you sure you want to delete user "${userName}"? This action cannot be undone.`,
-      )
-    )
-      return;
+  const handleDeleteUser = (userId: string, userName: string) => {
+    setConfirmModal({
+      show: true,
+      title: 'Delete User',
+      message: `Are you sure you want to delete user "${userName}"? This action cannot be undone.`,
+      type: 'danger',
+      confirmText: 'Yes, Delete User',
+      onConfirm: async () => {
+        try {
+          const res = await fetch(`${API_BASE_URL}/api/users/${userId}`, {
+            method: "DELETE",
+            credentials: "include",
+          });
+          if (res.status === 401) {
+            window.location.href = import.meta.env.BASE_URL + 'login';
+            return;
+          }
+          if (!res.ok) {
+            const data = await res.json();
+            throw new Error(data.error || "Failed to delete user");
+          }
 
-    try {
-      const res = await fetch(`${API_BASE_URL}/api/users/${userId}`, {
-        method: "DELETE",
-        credentials: "include",
-      });
-      if (res.status === 401) {
-        window.location.href = import.meta.env.BASE_URL + 'login';
-        return;
+          setUsers(users.filter((u) => u.id !== userId));
+          showToast(`User "${userName}" deleted successfully`, "success");
+        } catch (err: any) {
+          showToast(err.message, "error");
+        }
       }
-      if (!res.ok) {
-        const data = await res.json();
-        throw new Error(data.error || "Failed to delete user");
-      }
-
-      setUsers(users.filter((u) => u.id !== userId));
-      showToast(`User "${userName}" deleted successfully`, "success");
-    } catch (err: any) {
-      showToast(err.message, "error");
-    }
+    });
   };
 
-  const handleApproveRegistration = async (id: string, name: string) => {
-    if (!confirm(`Approve registration for "${name}"?`)) return;
+  const handleApproveRegistration = (id: string, name: string) => {
+    setConfirmModal({
+      show: true,
+      title: 'Approve Registration',
+      message: `Approve registration for "${name}"? They will be able to login after approval.`,
+      type: 'success',
+      confirmText: 'Yes, Approve',
+      onConfirm: async () => {
+        try {
+          const res = await fetch(`${API_BASE_URL}/api/pending-registrations/${id}/approve`, {
+            method: "POST",
+            credentials: "include",
+          });
+          if (!res.ok) throw new Error("Failed to approve registration");
 
-    try {
-      const res = await fetch(`${API_BASE_URL}/api/pending-registrations/${id}/approve`, {
-        method: "POST",
-        credentials: "include",
-      });
-      if (!res.ok) throw new Error("Failed to approve registration");
-
-      setPendingRegistrations(pendingRegistrations.filter((p) => p.id !== id));
-      fetchUsers(); // Refresh user list
-      showToast(`Registration for ${name} approved successfully!`, "success");
-    } catch (err: any) {
-      showToast(err.message, "error");
-    }
+          setPendingRegistrations(pendingRegistrations.filter((p) => p.id !== id));
+          fetchUsers(); // Refresh user list
+          showToast(`Registration for ${name} approved successfully!`, "success");
+        } catch (err: any) {
+          showToast(err.message, "error");
+        }
+      }
+    });
   };
 
-  const handleRejectRegistration = async (id: string, name: string) => {
-    if (!confirm(`Reject registration for "${name}"? This action cannot be undone.`)) return;
+  const handleRejectRegistration = (id: string, name: string) => {
+    setConfirmModal({
+      show: true,
+      title: 'Reject Registration',
+      message: `Reject registration for "${name}"? This action cannot be undone.`,
+      type: 'danger',
+      confirmText: 'Yes, Reject',
+      onConfirm: async () => {
+        try {
+          const res = await fetch(`${API_BASE_URL}/api/pending-registrations/${id}/reject`, {
+            method: "POST",
+            credentials: "include",
+          });
+          if (!res.ok) throw new Error("Failed to reject registration");
 
-    try {
-      const res = await fetch(`${API_BASE_URL}/api/pending-registrations/${id}/reject`, {
-        method: "POST",
-        credentials: "include",
-      });
-      if (!res.ok) throw new Error("Failed to reject registration");
-
-      setPendingRegistrations(pendingRegistrations.filter((p) => p.id !== id));
-      showToast(`Registration for ${name} rejected.`, "info");
-    } catch (err: any) {
-      showToast(err.message, "error");
-    }
+          setPendingRegistrations(pendingRegistrations.filter((p) => p.id !== id));
+          showToast(`Registration for ${name} rejected.`, "info");
+        } catch (err: any) {
+          showToast(err.message, "error");
+        }
+      }
+    });
   };
 
   if (user?.role !== "admin") {
@@ -632,6 +673,17 @@ export default function AdminPanel() {
           )}
         </div>
       </motion.div>
+
+      {/* Confirm Modal */}
+      <ConfirmModal
+        show={confirmModal.show}
+        onClose={() => setConfirmModal({ ...confirmModal, show: false })}
+        onConfirm={confirmModal.onConfirm}
+        title={confirmModal.title}
+        message={confirmModal.message}
+        type={confirmModal.type}
+        confirmText={confirmModal.confirmText}
+      />
     </Layout>
   );
 }
